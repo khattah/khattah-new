@@ -1,0 +1,109 @@
+ADD MOBILE PHONE VERIFICATION TO KHATTAH NEW REGISTRATION
+
+Continue working on the existing khattah-new project.
+Do not rebuild the application and do not change the current stack.
+
+REGISTRATION
+
+Add a required mobile phone number field to registration.
+
+The user should:
+
+1. Enter their full name and other registration information.
+2. Select their country/country calling code.
+3. Enter their mobile number.
+4. Click "Send verification code".
+5. Receive a one-time verification code (OTP) by SMS.
+6. Enter the verification code.
+7. The backend verifies the code.
+8. Only after successful verification should the mobile number be marked as verified.
+
+DATABASE
+
+Store:
+- country calling code
+- normalized mobile number
+- phone_verified status
+- phone_verified_at timestamp
+
+Mobile numbers should be unique where appropriate.
+
+SECURITY
+
+Do not store OTP codes in plain text permanently.
+
+OTP codes must:
+- expire after a short period
+- have a limited number of verification attempts
+- have resend rate limits
+- be generated and validated on the backend
+- never be trusted from frontend JavaScript
+
+Do not expose OTP codes through the API, HTML, logs, or browser.
+
+DEVELOPMENT MODE
+
+For now, create a safe MOCK SMS verification mode so we can test registration without paying for an SMS provider.
+
+Clearly label it as development/testing only.
+
+Do NOT connect a paid SMS provider yet.
+
+Design the verification service so that later we can connect a real SMS provider without rewriting the registration system.
+
+USER INTERFACE
+
+Registration should show:
+
+Mobile Number
+[Country Code] [Phone Number]
+
+[Send verification code]
+
+Verification Code
+[______]
+
+[Verify]
+
+After successful verification display:
+
+✓ Mobile number verified
+
+Use a clear mobile-first design consistent with the existing KHATTAH interface.
+
+API
+
+Prepare appropriate /api/v1/ endpoints for:
+- requesting phone verification
+- verifying an OTP
+
+Apply authentication/security/rate limiting as appropriate.
+
+Do not expose sensitive verification information.
+
+ADMIN
+
+Allow an authorized administrator to see whether a user's mobile number is:
+- Verified
+- Not Verified
+
+The administrator must NOT be able to see OTP codes.
+
+TESTING
+
+Test:
+- valid phone number
+- invalid phone number
+- correct OTP
+- incorrect OTP
+- expired OTP
+- repeated attempts
+- resend
+- already verified number
+- duplicate number
+
+Do not activate a real SMS service yet.
+
+After implementing and testing this feature, report what was changed.
+
+Do NOT push to GitHub until I approve it.

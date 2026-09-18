@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Rewards') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Eligibility record') }}</span><h1>{{ t('Rewards') }}</h1><p>{{ t('A reward becomes available when its five-participant package completes. No money is sent automatically.') }}</p></div></section>
+  {% if data %}
+  <section class="reward-grid">
+    {% for reward in data %}
+    <article class="reward-card">
+       <span class="status-chip status-chip--{{ reward.status_meta.tone }}"><i></i>{{ t(reward.status_meta.label) }}</span>
+      <span class="reward-mark">◇</span>
+      <h2>{{ t('package heading', number=reward.sequence_number) }}</h2>
+       <p>{{ t('Eligibility recorded') }} {{ reward.eligible_at[:10] }}</p>
+       <div><strong>{{ t('Payment amount') }}</strong><span>{{ t('Not configured') }}</span></div>
+       <div><strong>{{ t('Payout status') }}</strong><span>{{ t('Disabled') }}</span></div>
+    </article>
+    {% endfor %}
+  </section>
+  {% else %}
+   <section class="empty-reward"><span>◇</span><h2>{{ t('No reward available yet') }}</h2><p>{{ t('Complete all five qualifying positions in a package to create a reward eligibility record.') }}</p><a class="button button--dark" href="{{ url_for('packages') }}">{{ t('View package progress') }}</a></section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,17 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Settings — KHATTAH{% endblock %}
+{% block title %}{{ t('Settings') }} — KHATTAH{% endblock %}
 {% block content %}
 <div class="page-wrap page-wrap--narrow">
-  <section class="page-heading"><div><span class="eyebrow">Preferences</span><h1>Settings</h1><p>Choose how KHATTAH communicates with you.</p></div></section>
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Preferences') }}</span><h1>{{ t('Settings') }}</h1><p>{{ t('Choose how KHATTAH communicates with you.') }}</p></div></section>
   <form method="post" class="panel settings-panel">
-    <div class="settings-group"><div><h2>Notifications</h2><p>Control your account messages and reminders.</p></div>
-      <label class="toggle-row"><span><strong>Email notifications</strong><small>Receive general account updates.</small></span><input type="checkbox" name="email_notifications" {% if data.email_notifications %}checked{% endif %}><i></i></label>
-      <label class="toggle-row"><span><strong>Invitation reminders</strong><small>Receive updates about pending invitations.</small></span><input type="checkbox" name="invitation_reminders" {% if data.invitation_reminders %}checked{% endif %}><i></i></label>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="settings-group"><div><h2>{{ t('Notifications') }}</h2><p>{{ t('Control your account messages and reminders.') }}</p></div>
+      <label class="toggle-row"><span><strong>{{ t('Email notifications') }}</strong><small>{{ t('Receive general account updates.') }}</small></span><input type="checkbox" name="email_notifications" {% if data.email_notifications %}checked{% endif %}><i></i></label>
+      <label class="toggle-row"><span><strong>{{ t('Invitation reminders') }}</strong><small>{{ t('Receive updates about pending invitations.') }}</small></span><input type="checkbox" name="invitation_reminders" {% if data.invitation_reminders %}checked{% endif %}><i></i></label>
     </div>
-    <div class="settings-group"><div><h2>Language</h2><p>Choose your preferred interface language.</p></div>
-      <label>Preferred language<select name="preferred_language"><option value="en" {% if data.preferred_language == 'en' %}selected{% endif %}>English</option><option value="fr" {% if data.preferred_language == 'fr' %}selected{% endif %}>French</option></select></label>
+    <div class="settings-group"><div><h2>{{ t('Language') }}</h2><p>{{ t('Choose your preferred interface language.') }}</p></div>
+      <label>{{ t('Preferred language') }}<select name="preferred_language"><option value="en" {% if data.preferred_language == 'en' %}selected{% endif %}>{{ t('English') }}</option><option value="ar" {% if data.preferred_language == 'ar' %}selected{% endif %}>{{ t('Arabic') }}</option></select></label>
     </div>
-    <div class="form-actions"><button class="button button--dark" type="submit">Save settings <span>→</span></button></div>
+    <div class="form-actions"><button class="button button--dark" type="submit">{{ t('Save settings') }} <span>→</span></button></div>
   </form>
 </div>
 {% endblock %}

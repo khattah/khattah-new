@@ -1,0 +1,232 @@
+Continue developing the existing KHATTAH NEW application.
+
+IMPORTANT:
+Do NOT rebuild the application from scratch.
+Do NOT change the current technology stack.
+Keep:
+
+- HTML5
+- CSS / SCSS
+- Vanilla JavaScript
+- Python Flask
+- SQLite
+- Existing service layer
+- Existing /api/v1/ API structure
+- Existing responsive mobile and desktop design
+
+The current foundation is working.
+
+Now begin Phase 2: implement the real Khattah circle system.
+
+KHATTAH IS NOT A MONTHLY ROSCA.
+
+Khattah is completion/event-driven.
+
+A participant receives their reward when their circle is completed.
+
+A participant can complete more than one circle in:
+- one day
+- one week
+- one month
+
+There must NOT be a monthly restriction on receiving rewards.
+
+INVITATIONS
+
+A user may invite many people.
+
+The first 5 PAID/QUALIFIED participants that satisfy the Khattah rules count toward completing that user's circle.
+
+Simply registering or receiving an invitation does NOT mean that person qualifies.
+
+Keep a clear distinction between:
+
+1. Invited
+2. Registered
+3. Paid/Activated
+4. Qualified for a circle
+5. Reward eligible
+6. Completed
+
+STATUS COLORS
+
+Maintain the existing status system:
+
+Yellow = Registered / Invited
+Green = Paid / Activated
+Blue = Eligible to Redeem / Receive Reward
+Red = Completed
+
+CIRCLE PROGRESS
+
+On My Circle and Dashboard, show progress toward the 5 qualifying participants.
+
+For example:
+
+Circle Progress
+3 / 5 Qualified
+
+Show the five qualifying positions visually.
+
+When all 5 required qualifying positions are completed, the circle becomes complete.
+
+MULTIPLE CIRCLES
+
+The database and business logic must support a user having multiple circles.
+
+Do NOT overwrite an old completed circle.
+
+Every circle must have its own unique ID and history.
+
+For example:
+
+Circle #1 - Completed
+Circle #2 - Active
+Circle #3 - Completed
+
+A user may complete multiple circles without waiting for a new month.
+
+HISTORY
+
+Keep permanent records for:
+
+- Invitations
+- Registrations
+- Activations
+- Qualifying participants
+- Circle creation
+- Circle completion
+- Reward eligibility
+- Transactions
+- Completed circles
+
+Do not delete historical circle information when a new circle begins.
+
+SECURITY
+
+All important qualification and circle-completion logic must run on the Python Flask backend.
+
+Do NOT trust JavaScript or browser input to decide:
+
+- who qualifies
+- whether a circle is complete
+- whether a reward is available
+- payment status
+
+Frontend JavaScript should only display information returned by the backend.
+
+PAYMENTS
+
+Do NOT connect a real payment gateway yet.
+
+Create a safe MOCK payment/activation system for development.
+
+An administrator or demo action can mark a participant as paid/activated.
+
+The backend should then evaluate whether that participant qualifies for the appropriate circle.
+
+REWARDS
+
+Do NOT send real money.
+
+When a circle satisfies the required conditions, create a reward eligibility record.
+
+Display:
+
+Reward Available
+
+and use the BLUE status.
+
+The reward must NOT be automatically paid yet.
+
+ADMIN
+
+Add or improve an Admin section where an authorized administrator can:
+
+- View users
+- View invitations
+- View circles
+- View circle participants
+- View payment/activation status
+- View completed circles
+- View reward eligibility
+- Mark MOCK payments as received for testing
+
+Protect admin routes so normal users cannot access them.
+
+DATABASE
+
+Update the database carefully to support:
+
+Users
+Invitations
+Circles
+Circle Participants
+Activations/Payments
+Rewards
+Transactions
+Audit/Activity History
+
+Use proper relationships and unique IDs.
+
+Do not destroy existing data unnecessarily.
+
+API
+
+Update /api/v1/ so the future mobile app can retrieve:
+
+- Current user
+- Dashboard
+- Circle progress
+- Invitations
+- Circle history
+- Transactions
+- Reward status
+
+Do not expose passwords, password hashes, session secrets or sensitive internal information through the API.
+
+TESTING
+
+Create demo/test data that allows us to test:
+
+1. User with 0/5 qualified participants
+2. User with 1/5
+3. User with 4/5
+4. User reaching 5/5
+5. Circle becoming completed
+6. Reward becoming available
+7. User starting another circle
+8. User completing more than one circle
+
+IMPORTANT:
+
+Do not invent additional financial rules, fees, reward amounts, payment amounts, payout formulas, percentages or money distribution rules.
+
+Those will be provided separately.
+
+If implementation requires one of those unspecified financial rules, leave it configurable or disabled rather than guessing.
+
+After completing this phase:
+
+1. Run the Flask application.
+2. Fix runtime errors.
+3. Test registration and login.
+4. Test invitations.
+5. Test the 5-participant circle.
+6. Test circle completion.
+7. Test multiple circles.
+8. Test reward eligibility.
+9. Test admin authorization.
+10. Show the completed application in Preview.
+
+Do NOT publish to production yet.
+
+Do NOT make real financial transactions.
+
+When everything is working, stop and report exactly:
+- what was implemented
+- what was tested
+- what remains disabled
+- any business rules that still need clarification
+
+Do not push to GitHub until I approve the finished Phase 2 result.

@@ -1,0 +1,164 @@
+ADD ARABIC AND ENGLISH LANGUAGE SUPPORT TO KHATTAH NEW
+
+Continue developing the existing khattah-new application.
+Do not rebuild the project and do not change the current technology stack.
+
+LANGUAGES
+
+KHATTAH must support:
+
+1. English
+2. Arabic
+
+Add a language selector that is easy to access from:
+- Landing page
+- Registration/Login
+- Dashboard
+- Settings
+
+Example:
+
+English | العربية
+
+ENGLISH
+
+English must use:
+- Left-to-right (LTR) layout
+- English navigation, buttons, forms, messages and validation errors
+
+ARABIC
+
+Arabic must use:
+- Right-to-left (RTL) layout
+- Proper Arabic text alignment
+- Arabic navigation
+- Arabic buttons
+- Arabic forms
+- Arabic validation messages
+- Arabic dashboard
+- Arabic circle information
+- Arabic admin interface where practical
+
+Do not simply reverse every visual element.
+Create a proper RTL responsive layout.
+
+TRANSLATION SYSTEM
+
+Do not hard-code separate English and Arabic pages.
+
+Create one reusable translation/localization system.
+
+All user-facing text should use translation keys so additional languages can be added later.
+
+Examples:
+
+English:
+Dashboard
+My Circle
+Invitations
+Transactions
+Profile
+Settings
+Mobile Number
+Send verification code
+Verification Code
+Verify
+Mobile number verified
+Reward Available
+Completed
+
+Arabic:
+لوحة التحكم
+دائرتي
+الدعوات
+المعاملات
+الملف الشخصي
+الإعدادات
+رقم الهاتف
+إرسال رمز التحقق
+رمز التحقق
+تحقق
+تم التحقق من رقم الهاتف
+المكافأة متاحة
+مكتمل
+
+LANGUAGE PREFERENCE
+
+Save the user's preferred language.
+
+If a logged-in user selects Arabic, keep Arabic when they:
+- change pages
+- log out and return
+- log in again
+
+Allow the language to be changed at any time from Settings.
+
+MOBILE PHONE REGISTRATION
+
+The new mobile verification screens must also support both languages.
+
+English example:
+
+Mobile Number
+Country Code
+Send verification code
+Enter verification code
+Verify
+
+Arabic:
+
+رقم الهاتف
+رمز الدولة
+إرسال رمز التحقق
+أدخل رمز التحقق
+تحقق
+
+COUNTRY AND PHONE NUMBERS
+
+Do not reverse phone numbers when using Arabic.
+
+Phone numbers, OTP codes and other numeric identifiers must remain easy to enter and read.
+
+KHATTAH STATUS COLORS
+
+Keep the same status colors in both languages:
+
+Yellow = Invited / Registered
+Green = Paid / Activated
+Blue = Reward Eligible
+Red = Completed
+
+Translate the status text, but do not change the meaning or colors.
+
+API AND DATABASE
+
+Do not duplicate business data for Arabic and English.
+
+Store the user's language preference.
+
+Keep the existing /api/v1/ structure compatible with future mobile applications.
+
+SECURITY
+
+Language selection must never affect authentication, authorization, payment status, circle qualification or other Khattah business rules.
+
+TESTING
+
+Test:
+- English landing page
+- Arabic landing page
+- English registration
+- Arabic registration
+- Mobile verification in both languages
+- Login in both languages
+- Dashboard in both languages
+- My Circle in both languages
+- Invitations in both languages
+- Switching English → Arabic
+- Switching Arabic → English
+- RTL layout on mobile
+- RTL layout on desktop
+
+Do not push these changes to GitHub yet.
+
+When finished, show me both the English and Arabic versions in Preview and report any untranslated text that remains.

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Transactions — KHATTAH{% endblock %}
+{% block title %}{{ t('Transactions') }} — KHATTAH{% endblock %}
 {% block content %}
 <div class="page-wrap">
-  <section class="page-heading"><div><span class="eyebrow">Account record</span><h1>Transactions</h1><p>A clear history of account activity. No payment processing is active.</p></div></section>
-  <section class="notice"><span>i</span><div><strong>Foundation mode</strong><p>Amounts and payment actions are intentionally disabled until you provide the exact Khattah rules.</p></div></section>
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Account record') }}</span><h1>{{ t('Transactions') }}</h1><p>{{ t('A clear history of account activity. No payment processing is active.') }}</p></div></section>
+  <section class="notice"><span>i</span><div><strong>{{ t('Foundation mode') }}</strong><p>{{ t('Amounts and payment actions are intentionally disabled until you provide the exact Khattah rules.') }}</p></div></section>
   <section class="panel">
-    <div class="panel-heading"><div><span class="eyebrow">History</span><h2>Recent records</h2></div></div>
+    <div class="panel-heading"><div><span class="eyebrow">{{ t('History') }}</span><h2>{{ t('Recent records') }}</h2></div></div>
     <div class="transaction-list">
       {% for item in data %}
-      <article class="transaction-row"><span class="transaction-icon">{{ '↗' if item.type == 'Invitation' else '✓' }}</span><div><strong>{{ item.description }}</strong><small>{{ item.type }} · {{ item.formatted_date }}</small></div><div class="transaction-meta"><strong>{{ item.amount_label }}</strong><span>{{ item.status }}</span></div></article>
+      <article class="transaction-row"><span class="transaction-icon">{{ '↗' if item.type == 'Invitation' else '✓' }}</span><div><strong>{{ t(item.description) }}</strong><small>{{ t(item.type) }} · <span class="numeric">{{ item.formatted_date }}</span></small></div><div class="transaction-meta"><strong>{{ t(item.amount_label) }}</strong><span>{{ t(item.status) }}</span></div></article>
       {% endfor %}
     </div>
   </section>

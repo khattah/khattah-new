@@ -1,0 +1,132 @@
+ADD ADMIN-CONTROLLED INVITATION MESSAGES TO KHATTAH NEW
+
+Continue developing the existing KHATTAH NEW application.
+Do not rebuild the application.
+
+INVITATION MESSAGE MANAGEMENT
+
+Create an Admin section called:
+
+Invitation Messages
+
+All standard invitation messages used by KHATTAH must be managed from this Admin section.
+
+Support invitation content for:
+
+- WhatsApp
+- SMS
+- Email
+- Facebook
+- Messenger
+- Telegram
+- X / Twitter
+- General Share / Copy Link
+
+ADMIN CONTROL
+
+For every invitation message, show:
+
+[ ] Approved
+[ ] Active
+
+I, as Admin, must be able to decide which message is:
+
+- Draft
+- Approved
+- Active
+- Inactive
+
+A message must NOT be available to normal users unless:
+
+1. It is approved by Admin
+AND
+2. It is marked Active by Admin.
+
+Allow Admin to activate/deactivate a message using a checkbox/tick.
+
+MESSAGE MANAGEMENT
+
+Admin must be able to:
+
+- Create a new invitation message
+- Edit an invitation message
+- Preview it
+- Approve it
+- Activate it
+- Deactivate it
+- Archive it
+- Select its media/channel
+- Choose English or Arabic
+- See when it was created and updated
+
+Do not permanently delete historical messages unnecessarily.
+
+ENGLISH AND ARABIC
+
+Invitation messages must support:
+
+English
+Arabic
+
+Arabic messages must display correctly RTL.
+
+Allow separate English and Arabic wording for the same invitation campaign.
+
+USER INVITATION PAGE
+
+Normal users must only see invitation messages that Admin has:
+
+Approved ✓
+AND
+Active ✓
+
+Users must NOT be able to edit the official invitation message.
+
+They may select an available approved message and then:
+
+- Share
+- Copy
+- Send invitation link
+
+INVITATION LINK
+
+Each invitation must continue to identify the inviter correctly.
+
+Do not allow users to modify another user's inviter/referral information.
+
+ADMIN AUDIT HISTORY
+
+Record:
+
+- Who created the message
+- Who edited it
+- Who approved it
+- Who activated/deactivated it
+- Date/time of each action
+
+TESTING
+
+Create sample invitation messages for testing.
+
+Test:
+
+Draft + Inactive → user cannot see it
+Approved + Inactive → user cannot see it
+Not Approved + Active → user cannot see it
+Approved + Active → user CAN see and use it
+
+Test both English and Arabic.
+
+SECURITY
+
+All approval and activation decisions must be enforced by the Flask backend.
+
+Do not rely only on JavaScript checkboxes.
+
+Only authorized Admin accounts can approve or activate invitation messages.
+
+Do not implement automatic posting to social-media accounts yet.
+
+When finished, test everything and show me the Admin Invitation Messages screen and the normal user's Invitation screen.
+
+Do NOT push to GitHub until I approve the completed work.

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "python3 app.py",
     "build": "python3 -m compileall -q .",
+    "test": "python3 -m unittest discover -s tests -v",
     "serve": "python3 app.py"
   }
 }

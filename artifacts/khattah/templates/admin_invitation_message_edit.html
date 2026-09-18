@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Edit Invitation Message') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap admin-page"><section class="panel">
+ <div class="panel-heading"><div><span class="eyebrow">{{ t('Invitation Messages') }}</span><h1>{{ t('Edit message') }}</h1></div></div>
+ <form method="post" class="message-editor">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="campaign_name" value="{{ message.campaign_name }}" required>
+  <select name="channel">{% for channel in ['whatsapp','sms','email','facebook','messenger','telegram','x','general'] %}<option value="{{ channel }}" {% if message.channel == channel %}selected{% endif %}>{{ channel|capitalize }}</option>{% endfor %}</select>
+  <select name="language"><option value="en" {% if message.language == 'en' %}selected{% endif %}>English</option><option value="ar" {% if message.language == 'ar' %}selected{% endif %}>العربية</option></select>
+  <input name="subject" value="{{ message.subject }}"><textarea name="body" required>{{ message.body }}</textarea><button class="button button--coral">{{ t('Save changes') }}</button>
+ </form>
+</section></div>
+{% endblock %}

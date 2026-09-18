@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ t('My Packages') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Event-driven participation') }}</span><h1>{{ t('My Packages') }}</h1><p>{{ t('Each package has its own ID, five qualifying positions, and permanent history.') }}</p></div><a class="button button--coral" href="{{ url_for('invitations') }}">{{ t('Add invitation') }} <span>↗</span></a></section>
+
+  {% set package = data.current %}
+  {% set package_meta = package_display(package.sequence_number) %}
+  <section class="package-summary package-summary--phase2">
+    <div>
+       <span class="status-chip status-chip--{{ package.status.tone }}"><i></i>{{ t(package.status.label) }}</span>
+        <h2>{{ package_meta.name }}</h2>
+        <p>{{ package_meta.description or t(data.target_description) }}</p>
+    </div>
+     <div class="summary-number"><strong>{{ package.qualified_count }}/5</strong><span>{{ t('Qualified participants') }}</span></div>
+  </section>
+
+  <section class="qualification-board">
+     <div class="panel-heading"><div><span class="eyebrow">{{ t('Package progress') }}</span><h2>{{ t('Five qualifying positions') }}</h2></div><strong>{{ package.qualified_count }} / {{ package.required_participants }} {{ t('Qualified') }}</strong></div>
+    <div class="qualification-slots">
+      {% for slot in package.slots %}
+      <article class="qualification-slot {{ 'qualification-slot--filled' if slot.filled }}">
+        <span class="slot-number">{{ slot.position }}</span>
+        {% if slot.filled %}
+        <span class="person-avatar">{{ slot.participant.initials }}</span>
+        <strong>{{ slot.participant.recipient }}</strong>
+         <span class="status-chip status-chip--green"><i></i>{{ t('Qualified') }}</span>
+        {% else %}
+        <span class="empty-ring"></span>
+         <strong>{{ t('Open position') }}</strong>
+         <small>{{ t('Waiting for a paid participant') }}</small>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% if package.status.key == 'completed' %}
+     <div class="package-complete-callout"><div><span class="status-chip status-chip--red"><i></i>{{ t('Completed') }}</span><strong>{{ t('package complete', number=package.sequence_number) }}</strong><p>{{ t('Its reward eligibility has been recorded. You may begin another package without waiting for a new month.') }}</p></div><form method="post" action="{{ url_for('packages_new') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="button button--dark" type="submit">{{ t('Start next package') }} <span>→</span></button></form></div>
+    {% endif %}
+  </section>
+
+  <section class="panel package-history">
+     <div class="panel-heading"><div><span class="eyebrow">{{ t('Permanent record') }}</span><h2>{{ t('Package history') }}</h2></div><span class="muted-count">{{ data.history|length }} {{ t('total') }}</span></div>
+    <div class="history-list">
+      {% for item in data.history %}
+       {% set item_meta = package_display(item.sequence_number) %}<article><span class="history-id">#{{ item.sequence_number }}</span><div><strong>{{ item_meta.name }}</strong><small>{{ t('Created') }} {{ item.created_at[:10] }}{% if item.completed_at %} · {{ t('Completed') }} {{ item.completed_at[:10] }}{% endif %}</small></div><span class="status-chip status-chip--{{ item.status.tone }}"><i></i>{{ t(item.status.label) }}</span><b>{{ item.qualified_count }}/5</b></article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

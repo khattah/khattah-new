@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Invitation Messages') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap admin-page">
+ <section class="page-heading"><div><span class="eyebrow">{{ t('Authorized administration') }}</span><h1>{{ t('Invitation Messages') }}</h1><p>{{ t('Manage every official bilingual sharing message, its approval state, and its audit history.') }}</p></div><a class="button button--outline" href="{{ url_for('admin') }}">{{ t('Back to Admin') }}</a></section>
+ <section class="panel admin-section">
+  <div class="panel-heading"><div><span class="eyebrow">{{ t('Create') }}</span><h2>{{ t('New official message') }}</h2></div></div>
+  <form method="post" action="{{ url_for('admin_message_create') }}" class="message-editor">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input name="campaign_name" placeholder="{{ t('Campaign name') }}" required>
+   <select name="channel">{% for channel in ['whatsapp','sms','email','facebook','messenger','telegram','x','general'] %}<option value="{{ channel }}">{{ channel|capitalize }}</option>{% endfor %}</select>
+   <select name="language"><option value="en">English</option><option value="ar">العربية</option></select>
+   <input name="subject" placeholder="{{ t('Subject') }}"><textarea name="body" placeholder="{{ t('Use only {inviter_name} and {invite_link}') }}" required></textarea>
+   <button class="button button--coral">{{ t('Create message') }}</button>
+  </form>
+ </section>
+ {% for message in messages %}
+ <section class="panel admin-section {% if message.language == 'ar' %}rtl-preview{% endif %}">
+  <div class="panel-heading"><div><span class="eyebrow">{{ message.channel|capitalize }} · {{ message.language|upper }}</span><h2>{{ message.campaign_name }}</h2></div><a class="mini-action" href="{{ url_for('admin_message_edit', message_id=message.id) }}">{{ t('Edit') }}</a></div>
+ <div class="message-preview" dir="{{ 'rtl' if message.language == 'ar' else 'ltr' }}"><strong>{{ message.subject or t('No subject') }}</strong><p>{{ message.body }}</p></div>
+  <div class="admin-metrics"><article><small>{{ t('Approved') }}</small><strong>{{ t('Yes') if message.is_approved else t('No') }}</strong></article><article><small>{{ t('Active') }}</small><strong>{{ t('Yes') if message.is_active else t('No') }}</strong></article><article><small>{{ t('Archived') }}</small><strong>{{ t('Yes') if message.is_archived else t('No') }}</strong></article></div>
+  <p class="table-note">{{ t('Created') }}: {{ message.created_at }} · {{ t('Updated') }}: {{ message.updated_at }}</p>
+  <div class="message-actions">
+   {% if not message.is_approved %}<form method="post" action="{{ url_for('admin_message_action',message_id=message.id,action='approve') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="mini-action">{{ t('Approve') }}</button></form>{% endif %}
+   {% if message.is_approved and not message.is_active and not message.is_archived %}<form method="post" action="{{ url_for('admin_message_action',message_id=message.id,action='activate') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="mini-action">{{ t('Activate') }}</button></form>{% endif %}
+   {% if message.is_active %}<form method="post" action="{{ url_for('admin_message_action',message_id=message.id,action='deactivate') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="mini-action">{{ t('Deactivate') }}</button></form>{% endif %}
+   {% if not message.is_archived %}<form method="post" action="{{ url_for('admin_message_action',message_id=message.id,action='archive') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="mini-action">{{ t('Archive') }}</button></form>{% endif %}
+  </div>
+  <details><summary>{{ t('Audit history') }}</summary>{% for audit in audit_rows if audit.message_id == message.id %}<p class="table-note">{{ audit.occurred_at }} · {{ audit.actor_name }} · {{ audit.action }}{% if audit.details %} · {{ audit.details }}{% endif %}</p>{% else %}<p class="table-note">{{ t('No audit history') }}</p>{% endfor %}</details>
+ </section>
+ {% else %}<section class="panel"><p>{{ t('No invitation messages yet.') }}</p></section>{% endfor %}
+</div>
+{% endblock %}

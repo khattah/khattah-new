@@ -1,0 +1,135 @@
+ADD BACKEND CUSTOMIZATION FOR PACKAGE NAMES AND TEMPLATE COLORS
+
+Continue developing the existing KHATTAH NEW application.
+
+In the backend control dashboard, add a section:
+
+Appearance & Package Settings
+
+PACKAGE NAMES
+
+Allow the backend administrator to change the DISPLAY NAME of each Package.
+
+For example:
+
+Package 1 → Starter
+Package 2 → Standard
+Package 3 → Advanced
+Package 4 → Premium
+Package 5 → Elite
+
+The administrator can enter any approved Package display name.
+
+Support separate names for:
+
+English
+Arabic
+
+Example:
+
+English: Premium
+Arabic: المميزة
+
+IMPORTANT:
+Changing a Package display name must NOT change:
+- Package ID
+- Package ownership
+- Package history
+- qualification records
+- transactions
+- rewards
+- database relationships
+
+The permanent Package ID remains unchanged.
+
+TEMPLATE COLORS
+
+For each of the 5 templates, allow the backend administrator to
+customize colors from the control dashboard.
+
+Provide color controls for:
+
+- Primary color
+- Secondary color
+- Background color
+- Header color
+- Navigation color
+- Button color
+- Card color
+- Text color
+- Link color
+- Border color
+
+Also maintain configurable status colors for:
+
+- Invited / Registered
+- Paid / Activated
+- Reward Eligible
+- Completed
+
+Show a color picker and HEX value.
+
+Example:
+
+Primary Color:    [color picker] #123456
+Button Color:     [color picker] #234567
+Background:       [color picker] #FFFFFF
+
+LIVE PREVIEW
+
+When the administrator changes colors, show a preview before saving.
+
+Provide:
+
+[ Preview ]
+[ Save Changes ]
+[ Reset to Template Default ]
+
+Preview must NOT affect normal users until Save Changes is selected.
+
+TEMPLATE INDEPENDENCE
+
+Each of the 5 templates must remember its own colors.
+
+Example:
+
+Template 1 → its own colors
+Template 2 → its own colors
+Template 3 → its own colors
+Template 4 → its own colors
+Template 5 → its own colors
+
+Changing Template 2 colors must not change Template 1.
+
+PACKAGE DISPLAY SETTINGS
+
+Allow the backend administrator to configure:
+
+- Package display name
+- Arabic Package name
+- Package description
+- Package icon
+- Package display order
+- Package visible/hidden status
+- Package active/inactive status
+
+Do NOT allow these appearance controls to change financial or
+qualification rules.
+
+SECURITY
+
+Only authorized backend administrators can modify Package names,
+colors, templates or appearance settings.
+
+All changes must be saved and validated by the Flask backend.
+
+AUDIT HISTORY
+
+Record:
+- what was changed
+- previous value
+- new value
+- administrator
+- date/time
+
+Do not push to GitHub until I approve the completed changes.

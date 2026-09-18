@@ -1,45 +1,55 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ current_language }}" dir="{{ text_direction }}" data-language="{{ current_language }}" data-theme="{{ appearance.template_key }}" data-theme-scope="{{ appearance.theme_scope }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#112a28">
-  <meta name="description" content="KHATTAH is a clear, circle-based financial participation platform.">
+  <meta name="description" content="{{ t('KHATTAH is a clear, package-based financial participation platform.') }}">
   <title>{% block title %}KHATTAH{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=Outfit:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
 </head>
-<body class="{% if current_user %}app-body{% else %}public-body{% endif %}">
+<body class="{% if current_user %}app-body{% else %}public-body{% endif %} theme-{{ appearance.template_key }}" data-theme="{{ appearance.template_key }}" data-theme-scope="{{ appearance.theme_scope }}" style="{% for field in ('primary','secondary','background','header','navigation','button','card','text','link','border','status_invited','status_paid','status_reward','status_completed') %}--theme-{{ field|replace('_','-') }}: {{ appearance.colors[field] }};{% endfor %}">
   {% if current_user %}
   <div class="app-frame">
     <aside class="sidebar">
-      <a class="brand brand--light" href="{{ url_for('dashboard') }}" aria-label="Khattah dashboard">
+      <a class="brand brand--light" href="{{ url_for('dashboard') }}" aria-label="{{ t('KHATTAH dashboard') }}">
         <span class="brand-mark"><i></i><i></i><i></i></span>
         <span>KHATTAH</span>
       </a>
+      <div class="language-switcher" aria-label="{{ t('Language') }}">
+        <a class="{{ 'active' if current_language == 'en' }}" href="{{ url_for('set_language', language='en', next=request.path) }}">{{ t('English') }}</a>
+        <span aria-hidden="true">|</span>
+        <a class="{{ 'active' if current_language == 'ar' }}" href="{{ url_for('set_language', language='ar', next=request.path) }}">{{ t('Arabic') }}</a>
+      </div>
       <div class="account-brief">
         <span class="avatar">{{ current_user['name'][:1] }}</span>
         <div>
           <strong>{{ current_user['name'] }}</strong>
-          <small>Member account</small>
+          <small>{{ t('Member account') }}</small>
         </div>
       </div>
-      <nav class="side-nav" aria-label="Primary navigation">
-        <a class="{{ 'active' if page == 'dashboard' }}" href="{{ url_for('dashboard') }}"><span>⌂</span>Overview</a>
-        <a class="{{ 'active' if page == 'circle' }}" href="{{ url_for('circle') }}"><span>◌</span>My Circle</a>
-        <a class="{{ 'active' if page == 'invitations' }}" href="{{ url_for('invitations') }}"><span>↗</span>Invitations</a>
-        <a class="{{ 'active' if page == 'transactions' }}" href="{{ url_for('transactions') }}"><span>↔</span>Transactions</a>
-        <a class="{{ 'active' if page == 'profile' }}" href="{{ url_for('profile') }}"><span>◎</span>Profile</a>
-        <a class="{{ 'active' if page == 'settings' }}" href="{{ url_for('settings') }}"><span>◇</span>Settings</a>
+      <nav class="side-nav" aria-label="{{ t('Primary navigation') }}">
+        <a class="{{ 'active' if page == 'dashboard' }}" href="{{ url_for('dashboard') }}"><span>⌂</span>{{ t('Overview') }}</a>
+        <a class="{{ 'active' if page == 'packages' }}" href="{{ url_for('packages') }}"><span>◌</span>{{ t('My Packages') }}</a>
+        <a class="{{ 'active' if page == 'invitations' }}" href="{{ url_for('invitations') }}"><span>↗</span>{{ t('Invitations') }}</a>
+        <a class="{{ 'active' if page == 'transactions' }}" href="{{ url_for('transactions') }}"><span>↔</span>{{ t('Transactions') }}</a>
+        <a class="{{ 'active' if page == 'rewards' }}" href="{{ url_for('rewards') }}"><span>◇</span>{{ t('Rewards') }}</a>
+        <a class="{{ 'active' if page == 'profile' }}" href="{{ url_for('profile') }}"><span>◎</span>{{ t('Profile') }}</a>
+        <a class="{{ 'active' if page == 'settings' }}" href="{{ url_for('settings') }}"><span>⚙</span>{{ t('Settings') }}</a>
+        {% if current_user['is_admin'] %}
+        <a class="{{ 'active' if page == 'admin' }}" href="{{ url_for('admin') }}"><span>▦</span>{{ t('Admin') }}</a>
+        {% endif %}
       </nav>
       <div class="sidebar-note">
-        <strong>Foundation mode</strong>
-        <p>Financial rules and processing are not active.</p>
+        <strong>{{ t('Event-driven packages') }}</strong>
+        <p>{{ t('Five paid, qualified participants complete a package.') }}</p>
       </div>
-      <a class="sign-out" href="{{ url_for('logout') }}">Sign out <span>→</span></a>
+      <a class="sign-out" href="{{ url_for('logout') }}">{{ t('Sign out') }} <span>→</span></a>
     </aside>
 
     <main class="app-main">
@@ -48,6 +58,11 @@
           <span class="brand-mark"><i></i><i></i><i></i></span>
           <span>KHATTAH</span>
         </a>
+        <div class="language-switcher language-switcher--dark">
+          <a class="{{ 'active' if current_language == 'en' }}" href="{{ url_for('set_language', language='en', next=request.path) }}">{{ t('English') }}</a>
+          <span>|</span>
+          <a class="{{ 'active' if current_language == 'ar' }}" href="{{ url_for('set_language', language='ar', next=request.path) }}">{{ t('Arabic') }}</a>
+        </div>
         <a class="mini-avatar" href="{{ url_for('profile') }}">{{ current_user['name'][:1] }}</a>
       </header>
 
@@ -55,7 +70,7 @@
         {% if messages %}
           <div class="flash-stack" aria-live="polite">
             {% for category, message in messages %}
-              <div class="flash flash--{{ category }}">{{ message }}<button type="button" aria-label="Close">×</button></div>
+              <div class="flash flash--{{ category }}">{{ t(message) }}<button type="button" aria-label="{{ t('Close') }}">×</button></div>
             {% endfor %}
           </div>
         {% endif %}
@@ -64,12 +79,12 @@
       {% block content %}{% endblock %}
     </main>
 
-    <nav class="bottom-nav" aria-label="Mobile navigation">
-      <a class="{{ 'active' if page == 'dashboard' }}" href="{{ url_for('dashboard') }}"><span>⌂</span>Home</a>
-      <a class="{{ 'active' if page == 'circle' }}" href="{{ url_for('circle') }}"><span>◌</span>Circle</a>
-      <a class="bottom-nav__primary {{ 'active' if page == 'invitations' }}" href="{{ url_for('invitations') }}"><span>↗</span>Invite</a>
-      <a class="{{ 'active' if page == 'transactions' }}" href="{{ url_for('transactions') }}"><span>↔</span>History</a>
-      <a class="{{ 'active' if page == 'profile' }}" href="{{ url_for('profile') }}"><span>◎</span>Profile</a>
+    <nav class="bottom-nav" aria-label="{{ t('Mobile navigation') }}">
+      <a class="{{ 'active' if page == 'dashboard' }}" href="{{ url_for('dashboard') }}"><span>⌂</span>{{ t('Home') }}</a>
+      <a class="{{ 'active' if page == 'packages' }}" href="{{ url_for('packages') }}"><span>◌</span>{{ t('Packages') }}</a>
+      <a class="bottom-nav__primary {{ 'active' if page == 'invitations' }}" href="{{ url_for('invitations') }}"><span>↗</span>{{ t('Invite') }}</a>
+      <a class="{{ 'active' if page == 'transactions' }}" href="{{ url_for('transactions') }}"><span>↔</span>{{ t('History') }}</a>
+      <a class="{{ 'active' if page == 'profile' }}" href="{{ url_for('profile') }}"><span>◎</span>{{ t('Profile') }}</a>
     </nav>
   </div>
   {% else %}
@@ -77,7 +92,7 @@
       {% if messages %}
         <div class="flash-stack flash-stack--public">
           {% for category, message in messages %}
-            <div class="flash flash--{{ category }}">{{ message }}<button type="button" aria-label="Close">×</button></div>
+            <div class="flash flash--{{ category }}">{{ t(message) }}<button type="button" aria-label="{{ t('Close') }}">×</button></div>
           {% endfor %}
         </div>
       {% endif %}

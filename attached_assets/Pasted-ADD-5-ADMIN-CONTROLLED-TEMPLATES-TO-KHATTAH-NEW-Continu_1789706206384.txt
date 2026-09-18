@@ -1,0 +1,225 @@
+ADD 5 ADMIN-CONTROLLED TEMPLATES TO KHATTAH NEW
+
+Continue developing the existing KHATTAH NEW application.
+Do NOT rebuild the project.
+Do NOT change the existing Khattah business logic, database records,
+Package logic, reward logic, user IDs, or API behavior.
+
+GOAL
+
+Create 5 different professional visual templates/themes for KHATTAH.
+
+The KHATTAH backend administrator must be able to select which
+template is currently active from the backend control dashboard.
+
+Changing a template must change DESIGN ONLY.
+It must never change or delete user data, Packages, invitations,
+transactions, rewards, or other business records.
+
+CREATE THESE 5 TEMPLATES
+
+TEMPLATE 1 — KHATTAH CLASSIC
+- Simple
+- Clean
+- Professional
+- Traditional financial dashboard
+- Easy navigation
+
+TEMPLATE 2 — KHATTAH MODERN
+- Modern fintech appearance
+- Larger cards
+- Clean typography
+- Modern buttons
+- Strong mobile design
+
+TEMPLATE 3 — KHATTAH MINIMAL
+- Very simple
+- More white space
+- Minimal visual elements
+- Fast and easy to understand
+
+TEMPLATE 4 — KHATTAH PREMIUM
+- Premium professional appearance
+- Refined cards
+- Professional dashboard
+- Suitable for a financial platform
+
+TEMPLATE 5 — KHATTAH MOBILE
+- Mobile-first
+- App-like appearance
+- Large touch controls
+- Strong bottom navigation
+- Optimized for smartphones
+
+ADMIN TEMPLATE CONTROL
+
+In the KHATTAH backend control dashboard create:
+
+Appearance / Templates
+
+Display all 5 templates as cards.
+
+For each template show:
+
+- Template name
+- Screenshot/preview
+- Preview button
+- Activate button
+- Current status
+
+Example:
+
+KHATTAH CLASSIC
+[ Preview ]
+[ Activate ]
+
+KHATTAH MODERN
+[ Preview ]
+[ Activate ]
+
+Only ONE template can be active at a time.
+
+Show clearly:
+
+✓ ACTIVE TEMPLATE
+
+ADMIN PREVIEW
+
+The backend administrator must be able to preview a template
+before activating it.
+
+Preview must NOT change the template for normal users.
+
+Only clicking:
+
+ACTIVATE TEMPLATE
+
+should make it live.
+
+FRONTEND
+
+The selected template should control the appearance of:
+
+- Landing page
+- Registration
+- Login
+- Dashboard
+- My Packages
+- Invitations
+- Transactions
+- Rewards
+- Profile
+- Settings
+- Navigation
+- Mobile navigation
+
+BACKEND CONTROL DASHBOARD
+
+Also provide the 5 visual styles for the backend administration
+dashboard.
+
+The administrator should be able to configure:
+
+Frontend Template: [Template 1-5]
+Backend Dashboard Template: [Template 1-5]
+
+Allow them to be selected independently.
+
+For example:
+
+Frontend:
+Template 4 - Premium
+
+Backend:
+Template 2 - Modern
+
+LANGUAGES
+
+Every template must fully support:
+
+English - LTR
+Arabic - RTL
+
+Changing templates must NOT change the user's selected language.
+
+RESPONSIVE DESIGN
+
+All 5 templates must work on:
+
+- Mobile
+- Tablet
+- Desktop
+
+SHARED BUSINESS LOGIC
+
+IMPORTANT:
+
+Do NOT create five separate Khattah applications.
+
+Use ONE application and ONE backend.
+
+Templates should reuse the same:
+
+- Flask backend
+- Database
+- Authentication
+- Services
+- APIs
+- Package logic
+- Invitation logic
+- Reward logic
+- User identity system
+
+Only the presentation/design layer changes.
+
+DATABASE / SETTINGS
+
+Store the active frontend and backend template selections in
+system settings.
+
+Example:
+
+active_frontend_template
+active_admin_template
+
+Only authorized backend administrators can change these settings.
+
+SECURITY
+
+Normal users must NOT be able to activate templates through:
+- URL manipulation
+- JavaScript
+- API calls
+- form manipulation
+
+Template activation must be authorized and validated by Flask
+on the backend.
+
+TESTING
+
+Test all 5 frontend templates.
+
+Test all 5 backend dashboard templates.
+
+Test:
+- English
+- Arabic RTL
+- Mobile
+- Tablet
+- Desktop
+- Template preview
+- Template activation
+- Switching templates
+- Login after switching
+- Packages after switching
+- Invitations after switching
+- Rewards after switching
+
+Confirm that switching templates does NOT alter any business data.
+
+IMPORTANT
+
+Do not push to GitHub yet.
+
+When complete, show me the 5 template previews in the backend
+control dashboard and report what was implemented and tested.

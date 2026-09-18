@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Appearance') }} · KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap admin-page">
+<section class="page-heading">
+  <div><span class="eyebrow">{{ t('Administration') }}</span><h1>{{ t('Appearance') }}</h1>
+  <p>{{ t('Choose presentation settings without changing package records or business rules.') }}</p></div>
+</section>
+
+<div class="theme-showcase">
+  <h2>{{ t('Visual Templates') }}</h2>
+  <p class="muted">{{ t('Each template offers a distinct structural hypothesis and responsive behavior.') }}</p>
+  <div class="theme-cards">
+    {% set theme_descriptions = {
+      'classic': t('Familiar compact financial dashboard, conservative geometry, strong table scanability, straightforward navigation.'),
+      'modern': t('Bold fintech hierarchy, larger modular cards, confident actions, responsive asymmetry, strong small-screen clarity.'),
+      'minimal': t('Maximum whitespace, reduced chrome, crisp separators, content-first simplicity and speed.'),
+      'premium': t('Refined editorial rhythm, layered but restrained surfaces, precise details suitable for a trusted financial platform.'),
+      'mobile': t('App-like touch experience, large controls, strong bottom navigation, stacked content, optimized primarily for smartphones but still polished on desktop.')
+    } %}
+    {% for key in template_keys %}
+    <div class="theme-card {% if appearance.active_frontend_template == key %}theme-card--active-frontend{% endif %} {% if appearance.active_admin_template == key %}theme-card--active-admin{% endif %} {% if appearance.template_key == key %}theme-card--previewing{% endif %}">
+      <div class="theme-mockup theme-mockup--{{ key }}" aria-hidden="true">
+        <div class="mockup-sidebar"></div>
+        <div class="mockup-main">
+          <div class="mockup-header"></div>
+          <div class="mockup-cards"><i></i><i></i><i></i></div>
+        </div>
+      </div>
+      <div class="theme-card-info">
+        <h3>KHATTAH {{ key|upper }}</h3>
+        <p class="muted" style="font-size: 0.75rem; line-height: 1.4; margin: 0;">{{ theme_descriptions[key] }}</p>
+        <div class="theme-status-badges">
+          {% if appearance.active_frontend_template == key %}<span class="badge badge--frontend">✓ {{ t('ACTIVE FRONTEND TEMPLATE') }}</span>{% endif %}
+          {% if appearance.active_admin_template == key %}<span class="badge badge--admin">✓ {{ t('ACTIVE ADMIN TEMPLATE') }}</span>{% endif %}
+          {% if appearance.template_key == key %}<span class="badge badge--preview">✓ {{ t('PREVIEWING') }}</span>{% endif %}
+        </div>
+        <div class="theme-actions">
+          <a class="button button--small button--ghost-dark" href="{{ url_for('dashboard', preview=key, preview_scope='frontend') }}" aria-label="{{ t('Preview Frontend for') }} KHATTAH {{ key|upper }}">{{ t('Preview Frontend') }}</a>
+          <a class="button button--small button--ghost-dark" href="{{ url_for('admin_appearance', preview=key, preview_scope='admin') }}" aria-label="{{ t('Preview Admin for') }} KHATTAH {{ key|upper }}">{{ t('Preview Admin') }}</a>
+          <form method="post" style="display:inline;"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="activate"><input type="hidden" name="kind" value="frontend"><input type="hidden" name="template" value="{{ key }}"><button class="button button--small" type="submit" aria-label="{{ t('Set Frontend to') }} KHATTAH {{ key|upper }}">{{ t('Set Frontend') }}</button></form>
+          <form method="post" style="display:inline;"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="activate"><input type="hidden" name="kind" value="admin"><input type="hidden" name="template" value="{{ key }}"><button class="button button--small button--outline" type="submit" aria-label="{{ t('Set Admin to') }} KHATTAH {{ key|upper }}">{{ t('Set Admin') }}</button></form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<section class="panel palette-section">
+  <div class="panel-heading"><div><span class="eyebrow">{{ t('Color System') }}</span><h2>{{ t('Palette Customization') }}</h2></div></div>
+  <div class="palette-editor">
+    <div class="palette-tabs">
+      {% for palette in colors %}
+      <button type="button" class="palette-tab {% if palette.template_key == (appearance.template_key or appearance.active_admin_template) %}active{% endif %}" data-target="palette-{{ palette.template_key }}">{{ palette.template_key|title }}</button>
+      {% endfor %}
+    </div>
+
+    {% for palette in colors %}
+    <form method="post" class="palette-form {% if palette.template_key == (appearance.template_key or appearance.active_admin_template) %}active{% endif %}" id="palette-{{ palette.template_key }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="colors">
+      <input type="hidden" name="template" value="{{ palette.template_key }}">
+
+      <div class="palette-layout">
+        <div class="palette-controls">
+          <div class="color-group">
+            <h4>{{ t('Brand & Surface') }}</h4>
+            <div class="color-grid">
+              {% for field in ['primary', 'secondary', 'background', 'card', 'border'] %}
+              <label class="color-input-wrap">
+                <span>{{ field|title }}</span>
+                <div class="color-picker-ui">
+                  <input type="color" data-color-picker="{{ field }}-{{ palette.template_key }}" value="{{ palette[field] }}">
+                  <input class="color-hex" data-color-hex="{{ field }}-{{ palette.template_key }}" name="{{ field }}" value="{{ palette[field] }}" pattern="#[0-9A-Fa-f]{6}" maxlength="7">
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="color-group">
+            <h4>{{ t('Typography & Actions') }}</h4>
+            <div class="color-grid">
+              {% for field in ['header', 'navigation', 'text', 'button', 'link'] %}
+              <label class="color-input-wrap">
+                <span>{{ field|title }}</span>
+                <div class="color-picker-ui">
+                  <input type="color" data-color-picker="{{ field }}-{{ palette.template_key }}" value="{{ palette[field] }}">
+                  <input class="color-hex" data-color-hex="{{ field }}-{{ palette.template_key }}" name="{{ field }}" value="{{ palette[field] }}" pattern="#[0-9A-Fa-f]{6}" maxlength="7">
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="color-group">
+            <h4>{{ t('Status Tones') }}</h4>
+            <div class="color-grid">
+              {% for field in ['status_invited', 'status_paid', 'status_reward', 'status_completed'] %}
+              <label class="color-input-wrap">
+                <span>{{ field.split('_')[1]|title }}</span>
+                <div class="color-picker-ui">
+                  <input type="color" data-color-picker="{{ field }}-{{ palette.template_key }}" value="{{ palette[field] }}">
+                  <input class="color-hex" data-color-hex="{{ field }}-{{ palette.template_key }}" name="{{ field }}" value="{{ palette[field] }}" pattern="#[0-9A-Fa-f]{6}" maxlength="7">
+                </div>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="palette-live-preview" id="preview-{{ palette.template_key }}">
+          <div class="preview-box">
+             <div class="preview-header"><h4>{{ t('Live Preview') }}</h4><small>{{ t('Unsaved changes appear here') }}</small></div>
+             <div class="preview-content">
+               <div class="preview-nav"></div>
+               <div class="preview-body">
+                 <div class="preview-hero">{{ t('Hero Area') }}</div>
+                 <div class="preview-cards">
+                   <div class="preview-card preview-card--paid"></div>
+                   <div class="preview-card preview-card--invited"></div>
+                 </div>
+                 <div class="preview-btn">{{ t('Action Button') }}</div>
+               </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="palette-actions">
+        <button class="button button--dark" type="submit">{{ t('Save Changes') }}</button>
+        <button class="button button--outline" type="submit" form="reset-{{ palette.template_key }}">{{ t('Reset to Default') }}</button>
+      </div>
+    </form>
+    <form method="post" id="reset-{{ palette.template_key }}" style="display:none;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="reset"><input type="hidden" name="template" value="{{ palette.template_key }}">
+    </form>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel"><h2>{{ t('Package display metadata') }}</h2><p class="muted">{{ t('Presentation-only labels; package history remains unchanged.') }}</p>
+{% for item in packages %}
+<form method="post" class="appearance-row package-display-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="package"><input type="hidden" name="sequence_number" value="{{ item.sequence_number }}">
+  <strong>#{{ item.sequence_number }}</strong>
+  <input name="name_en" value="{{ item.name_en }}" aria-label="English name" placeholder="English name">
+  <input name="name_ar" value="{{ item.name_ar }}" aria-label="Arabic name" placeholder="Arabic name">
+  <input name="description_en" value="{{ item.description_en }}" aria-label="English description" placeholder="English description">
+  <input name="description_ar" value="{{ item.description_ar }}" aria-label="Arabic description" placeholder="Arabic description">
+  <input type="number" name="display_order" value="{{ item.display_order }}" min="0" aria-label="Display order" style="width: 80px;">
+  <select name="icon" style="width: auto;">{% for icon in icons %}<option {% if icon == item.icon %}selected{% endif %}>{{ icon }}</option>{% endfor %}</select>
+  <label><input type="checkbox" name="is_visible" value="1" {% if item.is_visible %}checked{% endif %}> {{ t('Visible') }}</label>
+  <label><input type="checkbox" name="is_active" value="1" {% if item.is_active %}checked{% endif %}> {{ t('Active') }}</label>
+  <button class="button button--small" type="submit">{{ t('Save') }}</button>
+</form>
+{% endfor %}
+</section>
+
+<section class="panel"><h2>{{ t('Appearance audit history') }}</h2><div class="table-wrap"><table><thead><tr><th>{{ t('Action') }}</th><th>{{ t('Setting') }}</th><th>{{ t('Previous value') }}</th><th>{{ t('New value') }}</th><th>{{ t('Actor') }}</th><th>{{ t('Time') }}</th></tr></thead><tbody>{% for row in audit_rows %}<tr><td>{{ t(row.category|replace('_',' ')|title) }}</td><td>{{ t(row.setting_key|replace('_',' ')|title) }}</td><td><code>{{ row.previous_value or '—' }}</code></td><td><code>{{ row.new_value or '—' }}</code></td><td>{{ row.actor_name }}</td><td>{{ row.occurred_at }}</td></tr>{% else %}<tr><td colspan="6">{{ t('No changes yet.') }}</td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+{% endblock %}

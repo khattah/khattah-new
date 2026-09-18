@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block head_extra %}<meta name="robots" content="noindex,nofollow">{% if not invalid and message %}<meta property="og:title" content="{{ message.subject }}"><meta property="og:description" content="{{ message.body }}"><meta property="og:url" content="{{ request.url }}">{% endif %}{% endblock %}
+{% block title %}{{ t('Invitation') }} — KHATTAH{% endblock %}
+{% block public_content %}
+<main class="page-wrap public-invitation" dir="{{ 'rtl' if message and message.language == 'ar' else 'ltr' }}">
+  {% if invalid %}
+    <section class="panel"><h1>{{ t('Invitation unavailable') }}</h1><p>{{ t('This invitation link is invalid or has expired.') }}</p></section>
+  {% else %}
+    <section class="panel"><span class="eyebrow">{{ t('KHATTAH invitation') }}</span>
+      <h1>{{ message.subject if message else t('You are invited') }}</h1>
+      <p class="invitation-message">{{ message.body if message else t('You have been invited to join KHATTAH.') }}</p>
+      <p class="muted-count">{{ t('Invited by') }} {{ invitation.inviter_name }}</p>
+    </section>
+  {% endif %}
+</main>
+{% endblock %}

@@ -1,66 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Overview — KHATTAH{% endblock %}
+{% block title %}{{ t('Overview') }} — KHATTAH{% endblock %}
 {% block content %}
 <div class="page-wrap">
   <section class="page-heading page-heading--welcome">
-    <div><span class="eyebrow">Thursday, September 17</span><h1>Good morning, {{ data.member.name.split()[0] }}.</h1><p>Here is a clear view of your Khattah account today.</p></div>
-    <a class="button button--dark button--desktop" href="{{ url_for('invitations') }}">Invite someone <span>↗</span></a>
+     <div><span class="eyebrow">{{ t('Your account today') }}</span><h1>{{ t('Good morning') }}, {{ data.member.name.split()[0] }}.</h1><p>{{ t('Package progress updates whenever a paid participant qualifies.') }}</p></div>
+     <a class="button button--dark button--desktop" href="{{ url_for('invitations') }}">{{ t('Invite someone') }} <span>↗</span></a>
   </section>
 
   <section class="status-overview">
     <div class="status-overview__copy">
-      <span class="status-chip status-chip--{{ data.account_status.tone }}"><i></i>{{ data.account_status.label }}</span>
-      <h2>Your account is active</h2>
-      <p>You can invite participants and follow their visible status here. Financial rules remain disabled.</p>
+       <span class="status-chip status-chip--{{ data.package_status.tone }}"><i></i>{{ t(data.package_status.label) }}</span>
+      {% if data.current_package %}
+       <h2>{{ t('package heading', number=data.current_package.sequence_number) }} · {{ t('qualified progress', count=data.qualifying_participants.value, total=data.qualifying_participants.target) }}</h2>
+       <p>{{ t('The first five paid and qualified participants complete this package. Completion is event-driven, never monthly.') }}</p>
+      <div class="compact-slots">
+        {% for slot in data.current_package.slots %}
+         <span class="{{ 'filled' if slot.filled }}" title="{{ t('Position') }} {{ slot.position }}">{{ '✓' if slot.filled else slot.position }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+       <h2>{{ t('Your next package is ready to begin') }}</h2>
+      {% endif %}
     </div>
     <div class="status-rings">
       <div class="ring ring--one"></div><div class="ring ring--two"></div><div class="ring ring--three"></div>
-      <div class="ring-center"><strong>{{ data.invitation_count }}</strong><small>invites sent</small></div>
+       <div class="ring-center"><strong>{{ data.qualifying_participants.value }}</strong><small>{{ t('of 5 qualified') }}</small></div>
     </div>
   </section>
 
-  <div class="section-title"><div><span class="eyebrow">At a glance</span><h2>Your account today</h2></div></div>
+   <div class="section-title"><div><span class="eyebrow">{{ t('At a glance') }}</span><h2>{{ t('Live account status') }}</h2></div></div>
   <section class="metrics-grid">
     <article class="metric-card">
-      <span class="metric-icon metric-icon--coral">◌</span><small>Circle status</small>
-      <strong>{{ data.circle_status.label }}</strong><p>No qualification logic is active.</p>
-      <a href="{{ url_for('circle') }}">View circle <span>→</span></a>
+       <span class="metric-icon metric-icon--coral">◌</span><small>{{ t('Package progress') }}</small>
+       <strong>{{ t('qualified progress', count=data.qualifying_participants.value, total=data.qualifying_participants.target) }}</strong><p>{{ t('completed packages retained in history', count=data.completed_package_count) }}</p>
+       <a href="{{ url_for('packages') }}">{{ t('View packages') }} <span>→</span></a>
     </article>
     <article class="metric-card">
-      <span class="metric-icon metric-icon--green">↗</span><small>Invitations</small>
-      <strong>{{ data.invitation_count }} sent</strong><p>Across pending, opened, and joined.</p>
-      <a href="{{ url_for('invitations') }}">Manage invites <span>→</span></a>
+       <span class="metric-icon metric-icon--green">↗</span><small>{{ t('Invitations') }}</small>
+       <strong>{{ t('invitations sent', count=data.invitation_count) }}</strong><p>{{ t('Invited or registered people do not qualify until activated.') }}</p>
+       <a href="{{ url_for('invitations') }}">{{ t('Manage invites') }} <span>→</span></a>
     </article>
     <article class="metric-card">
-      <span class="metric-icon metric-icon--yellow">✓</span><small>Payment status</small>
-      <strong>{{ data.payment_status.label }}</strong><p>Payment processing is not implemented.</p>
-      <a href="{{ url_for('transactions') }}">View history <span>→</span></a>
+       <span class="metric-icon metric-icon--yellow">✓</span><small>{{ t('Mock payment status') }}</small>
+       <strong>{{ t('mock activations', count=data.payment_status.count) }}</strong><p>{{ t('Activations are recorded by an administrator for testing.') }}</p>
+       <a href="{{ url_for('transactions') }}">{{ t('View history') }} <span>→</span></a>
     </article>
     <article class="metric-card">
-      <span class="metric-icon metric-icon--blue">◇</span><small>Reward status</small>
-      <strong>{{ data.reward_status.label }}</strong><p>Reward rules are awaiting your definition.</p>
-      <a href="{{ url_for('circle') }}">Learn more <span>→</span></a>
+       <span class="metric-icon metric-icon--blue">◇</span><small>{{ t('Reward status') }}</small>
+       <strong>{{ t(data.reward_status.label) }}</strong><p>{{ t('No money is sent automatically. Eligibility remains recorded.') }}</p>
+       <a href="{{ url_for('rewards') }}">{{ t('View rewards') }} <span>→</span></a>
     </article>
   </section>
 
   <section class="split-section">
     <article class="panel">
-      <div class="panel-heading"><div><span class="eyebrow">Timeline</span><h2>Recent activity</h2></div><a href="{{ url_for('transactions') }}">View all</a></div>
+       <div class="panel-heading"><div><span class="eyebrow">{{ t('Permanent timeline') }}</span><h2>{{ t('Recent activity') }}</h2></div><a href="{{ url_for('transactions') }}">{{ t('View all') }}</a></div>
       <div class="activity-list">
         {% for item in data.recent_activity %}
-        <div class="activity-item"><span class="activity-mark">{{ '↗' if item.type == 'Invitation' else '✓' }}</span><div><strong>{{ item.description }}</strong><small>{{ item.type }} · {{ item.status }}</small></div><time>{{ item.occurred_at[:10] }}</time></div>
+         <div class="activity-item"><span class="activity-mark">{{ '✓' if item.event_type in ['participant_qualified', 'circle_completed'] else '↗' }}</span><div><strong>{{ t(item.description) }}</strong><small>{{ t(item.event_type.replace('_', ' ')|title) }}</small></div><time class="numeric">{{ item.occurred_at[:10] }}</time></div>
         {% else %}
-        <div class="empty-state"><strong>No activity yet</strong><p>Your account activity will appear here.</p></div>
+         <div class="empty-state"><strong>{{ t('No activity yet') }}</strong><p>{{ t('Your package events will appear here.') }}</p></div>
         {% endfor %}
       </div>
     </article>
     <aside class="panel panel--legend">
-      <span class="eyebrow">Status guide</span><h2>Know what each color means</h2>
+       <span class="eyebrow">{{ t('Status guide') }}</span><h2>{{ t('Know what each color means') }}</h2>
       <div class="legend-list">
-        <span><i class="tone tone--yellow"></i><b>Registered / Invited</b></span>
-        <span><i class="tone tone--green"></i><b>Paid / Activated</b></span>
-        <span><i class="tone tone--red"></i><b>Eligible to receive</b></span>
-        <span><i class="tone tone--blue"></i><b>Completed</b></span>
+         <span><i class="tone tone--yellow"></i><b>{{ t('Registered / Invited') }}</b></span>
+         <span><i class="tone tone--green"></i><b>{{ t('Paid / Activated / Qualified') }}</b></span>
+         <span><i class="tone tone--blue"></i><b>{{ t('Reward Available') }}</b></span>
+         <span><i class="tone tone--red"></i><b>{{ t('Package Completed') }}</b></span>
       </div>
     </aside>
   </section>

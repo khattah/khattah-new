@@ -1,0 +1,52 @@
+Continue and finish the currently requested KHATTAH NEW development.
+
+Complete all features that I have already requested.
+
+Do not add new features or invent new business rules.
+
+After development is complete:
+
+1. Stop making additional feature changes.
+2. Run the complete automated test suite.
+3. Fix all errors found.
+4. Test the application manually in Preview.
+5. Test English and Arabic RTL.
+6. Test mobile, tablet and desktop layouts.
+7. Test registration and development OTP verification.
+8. Test login and logout.
+9. Test permanent KHATTAH user identity.
+10. Test Packages and Package history.
+11. Test the 5-qualified-participant Package completion process.
+12. Test multiple Packages for the same user.
+13. Test reward eligibility and confirm it remains associated with the permanent KHATTAH user identity.
+14. Test invitations.
+15. Test backend administration controls.
+16. Test invitation-message approval and activation.
+17. Test the 5 frontend templates.
+18. Test the 5 backend dashboard templates.
+19. Test Package name customization.
+20. Test template color customization.
+21. Confirm changing templates or profile information does not change business records.
+22. Confirm no real payment or real reward payout is enabled.
+23. Confirm development/mock features are clearly separated from production functionality.
+24. Check for runtime errors, broken links and untranslated text.
+
+Do not continuously auto-reload the application.
+Disable unnecessary Flask auto-reloader behavior during this final stage.
+
+IMPORTANT:
+Do NOT push to GitHub yet.
+
+When everything is finished and all tests pass, STOP and give me a final report containing:
+
+- Features completed
+- Tests passed
+- Tests failed, if any
+- Remaining issues
+- Remaining business rules requiring clarification
+- Development/mock features still enabled
+- Production features still disabled
+- Security issues that should be addressed before public launch
+- Exact files changed
+
+Wait for my approval before committing or pushing anything to GitHub.

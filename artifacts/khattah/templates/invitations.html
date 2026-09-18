@@ -1,21 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Invitations — KHATTAH{% endblock %}
-{% block content %}
-<div class="page-wrap">
-  <section class="page-heading"><div><span class="eyebrow">Grow your circle</span><h1>Invitations</h1><p>Invite as many people as you like. Qualification rules will be defined later.</p></div></section>
-  <section class="invite-compose">
-    <div><span class="eyebrow eyebrow--light">New invitation</span><h2>Bring someone into your circle</h2><p>Enter an email address or phone number. This foundation records the invitation only.</p></div>
-    <form method="post" class="inline-form"><label for="recipient">Email or phone</label><div><input id="recipient" name="recipient" placeholder="name@example.com" required><button class="button button--coral" type="submit">Add invite <span>↗</span></button></div></form>
-  </section>
-  <section class="panel">
-    <div class="panel-heading"><div><span class="eyebrow">Invitation history</span><h2>People you invited</h2></div><span class="muted-count">{{ data|length }} total</span></div>
-    <div class="table-wrap">
-      <table><thead><tr><th>Recipient</th><th>Sent</th><th>Status</th></tr></thead><tbody>
-        {% for invite in data %}
-        <tr><td><strong>{{ invite.recipient }}</strong></td><td>{{ invite.sent_at }}</td><td><span class="status-chip status-chip--{{ 'green' if invite.status == 'joined' else 'yellow' }}"><i></i>{{ invite.status|title }}</span></td></tr>
-        {% endfor %}
-      </tbody></table>
-    </div>
-  </section>
-</div>
+{% block title %}{{ t('Invitations') }} — KHATTAH{% endblock %}
+{% block content %}<div class="page-wrap">
+<section class="page-heading"><div><span class="eyebrow">{{ t('Grow your package') }}</span><h1>{{ t('Invitations') }}</h1></div></section>
+<section class="invite-compose"><form method="post" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><label for="recipient">{{ t('Email or phone') }}</label><div><input id="recipient" name="recipient" required><select name="invitation_message_id" required><option value="" disabled selected>{{ t('Select an official message') }}</option>{% for message in messages %}<option value="{{ message.id }}">{{ message.channel|capitalize }} · {{ message.language|upper }}{% if message.subject %} · {{ message.subject[:35] }}{% endif %}</option>{% endfor %}</select><button class="button button--coral">{{ t('Add invite') }}</button></div></form></section>
+<section class="panel"><div class="panel-heading"><h2>{{ t('Available sharing messages') }}</h2></div>{% for message in messages %}<article dir="{{ 'rtl' if message.language == 'ar' else 'ltr' }}"><strong>{{ message.channel|capitalize }} · {{ message.language|upper }}</strong><p>{{ message.subject }}<br>{{ message.body }}</p></article>{% endfor %}</section>
+<section class="panel"><div class="panel-heading"><h2>{{ t('People you invited') }}</h2></div><div class="table-wrap"><table><tbody>
+{% for invite in data %}<tr><td><strong>{{ invite.recipient }}</strong></td><td>{{ invite.sent_at }}</td><td><span class="status-chip status-chip--{{ invite.status_meta.tone }}"><i></i>{{ t(invite.status_meta.label) }}</span>{% if invite.invite_link %}<div class="share-card" dir="{{ 'rtl' if invite.rendered_message.language == 'ar' else 'ltr' }}"><small>{{ invite.rendered_message.subject }}</small><p>{{ invite.rendered_message.body }}</p><input readonly value="{{ invite.invite_link }}"><div class="share-actions"><button type="button" data-copy-link="{{ invite.invite_link }}">{{ t('Copy Link') }}</button><a href="https://wa.me/?text={{ invite.share_text|urlencode }}">{{ t('WhatsApp') }}</a><a href="sms:?body={{ invite.share_text|urlencode }}">{{ t('SMS') }}</a><a href="mailto:?subject={{ invite.rendered_message.subject|urlencode }}&body={{ invite.share_text|urlencode }}">{{ t('Email') }}</a><a href="https://www.facebook.com/sharer/sharer.php?u={{ invite.invite_link|urlencode }}">{{ t('Facebook') }}</a><button type="button" data-copy-link="{{ invite.share_text }}">{{ t('Copy message for Messenger') }}</button><a href="https://www.messenger.com/" target="_blank" rel="noopener">{{ t('Open Messenger') }}</a><a href="https://t.me/share/url?url={{ invite.invite_link|urlencode }}&text={{ invite.share_text|urlencode }}">{{ t('Telegram') }}</a><a href="https://twitter.com/intent/tweet?text={{ invite.share_text|urlencode }}">{{ t('X') }}</a><button type="button" data-share-text="{{ invite.share_text }}" data-share-url="{{ invite.invite_link }}">{{ t('General Share') }}</button></div></div>{% elif invite.invitation_message_id %}<small>{{ t('Message is no longer available for sharing.') }}</small>{% endif %}</td></tr>{% endfor %}
+</tbody></table></div></section></div>
 {% endblock %}

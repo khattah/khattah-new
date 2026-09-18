@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Admin') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap admin-page">
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Authorized administration') }}</span><h1>{{ t('Khattah Admin') }}</h1><p>{{ t('Manage mock activations and inspect permanent package, reward, and participant records.') }}</p></div></section>
+  <section class="admin-metrics">
+    <article><small>{{ t('Users') }}</small><strong>{{ data.counts.users }}</strong></article>
+    <article><small>{{ t('Invitations') }}</small><strong>{{ data.counts.invitations }}</strong></article>
+    <article><small>{{ t('Packages') }}</small><strong>{{ data.counts.packages }}</strong></article>
+    <article><small>{{ t('Completed') }}</small><strong>{{ data.counts.completed }}</strong></article>
+    <article><small>{{ t('Rewards') }}</small><strong>{{ data.counts.rewards }}</strong></article>
+  </section>
+
+    <section class="panel admin-section">
+    <div class="panel-heading"><div><span class="eyebrow">{{ t('Invitation catalogue') }}</span><h2>{{ t('Bilingual sharing messages') }}</h2><p>{{ t('Create and govern official messages in a dedicated workspace.') }}</p></div><a class="button button--coral" href="{{ url_for('admin_invitation_messages') }}">{{ t('Open Invitation Messages') }}</a></div>
+   </section>
+    <section class="panel admin-section">
+     <div class="panel-heading"><div><span class="eyebrow">{{ t('Presentation') }}</span><h2>{{ t('Appearance themes') }}</h2><p>{{ t('Manage frontend and admin themes, palettes, and package labels.') }}</p></div><a class="button button--coral" href="{{ url_for('admin_appearance') }}">{{ t('Open Appearance') }}</a></div>
+    </section>
+   <section class="panel admin-section">
+    <div class="panel-heading"><div><span class="eyebrow">{{ t('Development controls') }}</span><h2>{{ t('Mock payment / activation queue') }}</h2></div></div>
+    <div class="table-wrap"><table><thead><tr><th>{{ t('Participant') }}</th><th>{{ t('Invited by') }}</th><th>{{ t('Status') }}</th><th>{{ t('Action') }}</th></tr></thead><tbody>
+    {% for invite in data.invitations %}
+      <tr><td><strong>{{ invite.recipient }}</strong><small class="table-note">{{ invite.sent_at }}</small></td><td>{{ invite.owner_name }}</td><td><span class="status-chip status-chip--{{ 'green' if invite.is_activated else 'yellow' }}"><i></i>{{ t('Paid / Activated') if invite.is_activated else t('Invited') }}</span></td><td>{% if not invite.is_activated %}<form method="post" action="{{ url_for('admin_activate', invitation_id=invite.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="mini-action" type="submit">{{ t('Mark mock paid') }}</button></form>{% else %}<span class="muted-count">{{ t('Recorded') }}</span>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <div class="admin-grid">
+     <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Package ledger') }}</span><h2>{{ t('All packages') }}</h2></div></div><div class="history-list">
+      {% for package in data.packages %}<article><span class="history-id">#{{ package.id }}</span><div><strong>{{ package.owner_name }} · {{ t('Package') }} #{{ package.sequence_number }}</strong><small>{{ package.qualified_count }}/5 {{ t('qualified') }}</small></div><span class="status-chip status-chip--{{ 'red' if package.status == 'completed' else 'green' }}"><i></i>{{ t('Completed') if package.status == 'completed' else t('Active') }}</span></article>{% endfor %}
+    </div></section>
+    <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Eligibility ledger') }}</span><h2>{{ t('Rewards') }}</h2></div></div><div class="history-list">
+      {% for reward in data.rewards %}<article><span class="history-id">◇</span><div><strong>{{ reward.owner_name }}</strong><small>{{ t('Package') }} #{{ reward.sequence_number }} · {{ reward.eligible_at[:10] }}</small></div><span class="status-chip status-chip--blue"><i></i>{{ t('Available') }}</span></article>{% else %}<div class="empty-state">{{ t('No rewards yet.') }}</div>{% endfor %}
+    </div></section>
+  </div>
+
+  <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Accounts') }}</span><h2>{{ t('Users') }}</h2></div></div><div class="table-wrap"><table><thead><tr><th>{{ t('User') }}</th><th>{{ t('Packages') }}</th><th>{{ t('Completed') }}</th><th>{{ t('Rewards') }}</th></tr></thead><tbody>
+  {% for user in data.users %}<tr><td><strong>{{ user.name }}</strong><small class="table-note">{{ user.email }}{% if user.is_admin %} · {{ t('Administrator') }}{% endif %}</small><span class="phone-state phone-state--{{ 'verified' if user.phone_verified else 'unverified' }}">{{ '✓ ' ~ t('Mobile Verified') if user.phone_verified else t('Mobile Not Verified') }}</span></td><td>{{ user.package_count }}</td><td>{{ user.completed_count }}</td><td>{{ user.reward_count }}</td></tr>{% endfor %}
+  </tbody></table></div></section>
+</div>
+{% endblock %}

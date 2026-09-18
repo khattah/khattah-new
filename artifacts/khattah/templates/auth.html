@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% set is_register = mode == 'register' %}
-{% block title %}{{ 'Create account' if is_register else 'Welcome back' }} — KHATTAH{% endblock %}
+{% block title %}{{ t('Create account' if is_register else 'Welcome back') }} — KHATTAH{% endblock %}
 {% block public_content %}
 <div class="auth-shell">
   <aside class="auth-story">
@@ -8,39 +8,79 @@
       <span class="brand-mark"><i></i><i></i><i></i></span><span>KHATTAH</span>
     </a>
     <div>
-      <span class="eyebrow eyebrow--light">Your participation, visible</span>
-      <h2>Move with confidence.<br>See every connection.</h2>
-      <p>A simple home for your circle, invitations, status, and account activity.</p>
+      <span class="eyebrow eyebrow--light">{{ t('Your participation, visible') }}</span>
+      <h2>{{ t('Move with confidence.') }}<br>{{ t('See every connection.') }}</h2>
+      <p>{{ t('A simple home for your package, invitations, status, and account activity.') }}</p>
     </div>
-    <small>KHATTAH FOUNDATION · 2026</small>
+    <small>{{ t('KHATTAH FOUNDATION') }} · 2026</small>
   </aside>
   <main class="auth-panel">
     <a class="brand auth-mobile-brand" href="{{ url_for('welcome') }}">
       <span class="brand-mark"><i></i><i></i><i></i></span><span>KHATTAH</span>
     </a>
+    <div class="language-switcher language-switcher--auth" aria-label="{{ t('Language') }}">
+      <a class="{{ 'active' if current_language == 'en' }}" href="{{ url_for('set_language', language='en', next=request.path) }}">{{ t('English') }}</a>
+      <span>|</span>
+      <a class="{{ 'active' if current_language == 'ar' }}" href="{{ url_for('set_language', language='ar', next=request.path) }}">{{ t('Arabic') }}</a>
+    </div>
     <div class="auth-form-wrap">
-      <span class="eyebrow">{{ 'Get started' if is_register else 'Welcome back' }}</span>
-      <h1>{{ 'Create your account' if is_register else 'Sign in to KHATTAH' }}</h1>
-      <p>{{ 'Join your circle and keep your progress in view.' if is_register else 'Continue to your personal dashboard.' }}</p>
+      <span class="eyebrow">{{ t('Verify your mobile') if verification_sent else t('Get started' if is_register else 'Welcome back') }}</span>
+      <h1>{{ t('Enter your verification code') if verification_sent else t('Create your account' if is_register else 'Sign in to KHATTAH') }}</h1>
+      <p>{{ t('A development mock SMS was sent to') ~ ' ' ~ masked_phone ~ '.' if verification_sent else t('Join your package and keep your progress in view.') if is_register else t('Continue to your personal dashboard.') }}</p>
+      {% if verification_sent %}
+      <div class="mock-mode-note"><strong>{{ t('Development / testing mode') }}</strong><span>{{ t('No paid SMS provider is connected. Codes are never displayed in this page, the API, logs, or admin tools.') }}</span></div>
+      <form method="post" action="{{ url_for('register_verify') }}" class="form-stack verification-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label>{{ t('Verification Code') }}
+          <input type="text" name="verification_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="{{ t('6-digit code') }}" required>
+        </label>
+        <button class="button button--dark button--block" type="submit">{{ t('Verify mobile number') }} <span>✓</span></button>
+      </form>
+      <div class="verification-actions">
+        <form method="post" action="{{ url_for('register_resend') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button type="submit">{{ t('Resend code') }}</button>
+        </form>
+        <a href="{{ url_for('register') }}">{{ t('Change number') }}</a>
+      </div>
+      {% else %}
       <form method="post" class="form-stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         {% if is_register %}
-        <label>Full name<input type="text" name="name" autocomplete="name" placeholder="Your full name" required></label>
+         <label>{{ t('Full name') }}<input type="text" name="name" autocomplete="name" placeholder="{{ t('Your full name') }}" value="{{ form_values.name|default('') }}" required></label>
         {% endif %}
-        <label>Email address<input type="email" name="email" autocomplete="email" placeholder="name@example.com" required></label>
-        <label>Password
+        <label>{{ t('Email address') }}<input type="email" name="email" autocomplete="email" placeholder="{{ t('name@example.com') }}" value="{{ form_values.email|default('') if is_register else '' }}" required></label>
+        <label>{{ t('Password') }}
           <span class="password-field">
-            <input type="password" name="password" autocomplete="{{ 'new-password' if is_register else 'current-password' }}" placeholder="Minimum 8 characters" minlength="8" required>
-            <button type="button" class="show-password">Show</button>
+            <input type="password" name="password" autocomplete="{{ 'new-password' if is_register else 'current-password' }}" placeholder="{{ t('Minimum 8 characters') }}" minlength="8" required>
+            <button type="button" class="show-password" data-show-label="{{ t('Show') }}" data-hide-label="{{ t('Hide') }}">{{ t('Show') }}</button>
           </span>
         </label>
-        <button class="button button--dark button--block" type="submit">{{ 'Create account' if is_register else 'Sign in' }} <span>→</span></button>
+        {% if is_register %}
+        <fieldset class="phone-fields">
+          <legend>{{ t('Mobile Number') }}</legend>
+          <div>
+            <label>{{ t('Country code') }}
+              <select name="country_code" required>
+                <option value="">{{ t('Select') }}</option>
+                {% for country, code in country_codes %}
+                <option value="{{ code }}" {{ 'selected' if form_values.country_code|default('') == code }}>{{ t(country) }} ({{ code }})</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>{{ t('Phone number') }}<input type="tel" name="mobile_number" autocomplete="tel-national" inputmode="tel" placeholder="306 555 0184" value="{{ form_values.mobile_number|default('') }}" required></label>
+          </div>
+        </fieldset>
+        {% endif %}
+         <button class="button button--dark button--block" type="submit">{{ t('Send verification code') if is_register else t('Sign in') }} <span>→</span></button>
       </form>
+      {% endif %}
       <p class="auth-switch">
-        {{ 'Already have an account?' if is_register else 'New to KHATTAH?' }}
-        <a href="{{ url_for('login' if is_register else 'register') }}">{{ 'Sign in' if is_register else 'Create account' }}</a>
+         {{ t('Already have an account?') if is_register else t('New to KHATTAH?') }}
+         <a href="{{ url_for('login' if is_register else 'register') }}">{{ t('Sign in') if is_register else t('Create account') }}</a>
       </p>
-      {% if not is_register %}
-      <div class="demo-entry"><span>Preview access</span><a href="{{ url_for('demo_login') }}">Open the demo dashboard</a></div>
+      {% if not is_register and not verification_sent %}
+       <div class="demo-entry"><span>{{ t('Member preview') }}</span><a href="{{ url_for('demo_login') }}">{{ t('Open member dashboard') }}</a></div>
       {% endif %}
     </div>
   </main>
