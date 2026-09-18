@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Page not found — KHATTAH{% endblock %}
+{% block public_content %}
+<main class="error-page"><a class="brand" href="{{ url_for('welcome') }}"><span class="brand-mark"><i></i><i></i><i></i></span><span>KHATTAH</span></a><span class="eyebrow">404</span><h1>This page is outside the circle.</h1><p>The page you requested does not exist.</p><a class="button button--dark" href="{{ url_for('welcome') }}">Return home <span>→</span></a></main>
+{% endblock %}

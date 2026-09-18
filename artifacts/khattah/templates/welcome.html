@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}KHATTAH — Build your circle with clarity{% endblock %}
+{% block public_content %}
+<div class="landing">
+  <header class="landing-nav">
+    <a class="brand brand--light" href="{{ url_for('welcome') }}">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span>KHATTAH</span>
+    </a>
+    <div class="landing-nav__actions">
+      <a class="text-link" href="{{ url_for('login') }}">Sign in</a>
+      <a class="button button--light button--small" href="{{ url_for('register') }}">Create account</a>
+    </div>
+  </header>
+
+  <main class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow eyebrow--light">A clearer way to participate</span>
+      <h1>Your circle.<br><em>Clearly connected.</em></h1>
+      <p>KHATTAH brings participation, invitations, and account progress into one simple place—designed to keep every step visible.</p>
+      <div class="hero-actions">
+        <a class="button button--coral" href="{{ url_for('register') }}">Start your account <span>→</span></a>
+        <a class="button button--ghost" href="{{ url_for('demo_login') }}">Explore demo</a>
+      </div>
+      <div class="trust-line"><span>✓</span> No payment processing is active in this foundation.</div>
+    </div>
+
+    <div class="hero-visual" aria-label="Preview of a Khattah circle">
+      <div class="orbit orbit--outer"></div>
+      <div class="orbit orbit--inner"></div>
+      <div class="person-node person-node--one"><span>NA</span><small>Paid</small></div>
+      <div class="person-node person-node--two"><span>SK</span><small>Registered</small></div>
+      <div class="person-node person-node--three"><span>FN</span><small>Invited</small></div>
+      <div class="hero-card">
+        <span class="hero-card__label">MY CIRCLE</span>
+        <strong>Everything in one view</strong>
+        <div class="circle-meter">
+          <span><i class="tone tone--green"></i>Paid / Active</span>
+          <span><i class="tone tone--yellow"></i>Invited</span>
+        </div>
+        <div class="rule-pending">Circle rules awaiting configuration</div>
+      </div>
+    </div>
+  </main>
+
+  <section class="status-strip">
+    <p>One system. Four clear status signals.</p>
+    <div>
+      <span><i class="tone tone--yellow"></i>Registered / Invited</span>
+      <span><i class="tone tone--green"></i>Paid / Activated</span>
+      <span><i class="tone tone--red"></i>Eligible to receive</span>
+      <span><i class="tone tone--blue"></i>Completed</span>
+    </div>
+  </section>
+</div>
+{% endblock %}

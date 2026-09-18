@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Profile — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap page-wrap--narrow">
+  <section class="page-heading"><div><span class="eyebrow">Your account</span><h1>Profile</h1><p>Keep your personal information current.</p></div></section>
+  <section class="profile-card">
+    <div class="profile-card__hero"><span class="profile-avatar">{{ data.name[:1] }}</span><div><h2>{{ data.name }}</h2><p>{{ data.email }}</p><span class="status-chip status-chip--{{ data.status.tone }}"><i></i>{{ data.status.label }}</span></div></div>
+    <form method="post" class="form-grid">
+      <label>Full name<input name="name" value="{{ data.name }}" required></label>
+      <label>Email address<input value="{{ data.email }}" disabled><small>Email changes will be enabled with full account verification.</small></label>
+      <label>Phone number<input name="phone" value="{{ data.phone }}" placeholder="Add a phone number"></label>
+      <label>Member since<input value="{{ data.joined_at }}" disabled></label>
+      <div class="form-actions"><button class="button button--dark" type="submit">Save profile <span>→</span></button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

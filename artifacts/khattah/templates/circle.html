@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My Circle — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-heading"><div><span class="eyebrow">Participation</span><h1>My Circle</h1><p>See everyone you have invited and their current account status.</p></div><a class="button button--coral" href="{{ url_for('invitations') }}">Add invitation <span>↗</span></a></section>
+  <section class="circle-summary">
+    <div><span class="status-chip status-chip--neutral"><i></i>{{ data.status.label }}</span><h2>Circle qualification is not active</h2><p>{{ data.target_description }}</p></div>
+    <div class="summary-number"><strong>{{ data.qualifying_participants.value }}</strong><span>{{ data.qualifying_participants.label }}</span></div>
+  </section>
+  <section class="panel">
+    <div class="panel-heading"><div><span class="eyebrow">Participants</span><h2>Your circle members</h2></div><span class="muted-count">{{ data.participants|length }} people</span></div>
+    <div class="people-list">
+      {% for person in data.participants %}
+      <article class="person-row"><span class="person-avatar">{{ person.initials }}</span><div><strong>{{ person.name }}</strong><small>Invited {{ person.invited_at }}</small></div><span class="status-chip status-chip--{{ person.status.tone }}"><i></i>{{ person.status.label }}</span></article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Invitations — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-heading"><div><span class="eyebrow">Grow your circle</span><h1>Invitations</h1><p>Invite as many people as you like. Qualification rules will be defined later.</p></div></section>
+  <section class="invite-compose">
+    <div><span class="eyebrow eyebrow--light">New invitation</span><h2>Bring someone into your circle</h2><p>Enter an email address or phone number. This foundation records the invitation only.</p></div>
+    <form method="post" class="inline-form"><label for="recipient">Email or phone</label><div><input id="recipient" name="recipient" placeholder="name@example.com" required><button class="button button--coral" type="submit">Add invite <span>↗</span></button></div></form>
+  </section>
+  <section class="panel">
+    <div class="panel-heading"><div><span class="eyebrow">Invitation history</span><h2>People you invited</h2></div><span class="muted-count">{{ data|length }} total</span></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Recipient</th><th>Sent</th><th>Status</th></tr></thead><tbody>
+        {% for invite in data %}
+        <tr><td><strong>{{ invite.recipient }}</strong></td><td>{{ invite.sent_at }}</td><td><span class="status-chip status-chip--{{ 'green' if invite.status == 'joined' else 'yellow' }}"><i></i>{{ invite.status|title }}</span></td></tr>
+        {% endfor %}
+      </tbody></table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{
+  "name": "@workspace/khattah",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "python3 app.py",
+    "build": "python3 -m compileall -q .",
+    "serve": "python3 app.py"
+  }
+}

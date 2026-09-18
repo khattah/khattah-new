@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "KHATTAH"
+description = "A mobile-first circle-based financial participation platform foundation with responsive navigation, account screens, dashboard, invitations, transactions, and profile settings using mock data only."
+version = "1.0.0"
+id = "artifacts/khattah"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22085
+
+[services.development]
+run = "pnpm --filter @workspace/khattah run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/khattah", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/khattah/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22085"
+BASE_PATH = "/"

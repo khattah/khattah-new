@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Transactions — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap">
+  <section class="page-heading"><div><span class="eyebrow">Account record</span><h1>Transactions</h1><p>A clear history of account activity. No payment processing is active.</p></div></section>
+  <section class="notice"><span>i</span><div><strong>Foundation mode</strong><p>Amounts and payment actions are intentionally disabled until you provide the exact Khattah rules.</p></div></section>
+  <section class="panel">
+    <div class="panel-heading"><div><span class="eyebrow">History</span><h2>Recent records</h2></div></div>
+    <div class="transaction-list">
+      {% for item in data %}
+      <article class="transaction-row"><span class="transaction-icon">{{ '↗' if item.type == 'Invitation' else '✓' }}</span><div><strong>{{ item.description }}</strong><small>{{ item.type }} · {{ item.formatted_date }}</small></div><div class="transaction-meta"><strong>{{ item.amount_label }}</strong><span>{{ item.status }}</span></div></article>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

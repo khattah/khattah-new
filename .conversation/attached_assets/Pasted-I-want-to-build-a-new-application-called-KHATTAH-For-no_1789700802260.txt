@@ -1,0 +1,135 @@
+I want to build a new application called KHATTAH.
+
+
+For now, create only a clean, professional foundation for the application.
+
+KHATTAH CONCEPT
+Khattah is a circle-based financial participation platform.
+There is no rule limiting a participant to one reward per month.
+CORE USER FLOW
+A user can register and create an account.
+A registered user can invite other people.
+A user may invite many people, but the system will later determine which qualifying participants count toward completing that user's circle.
+Do not implement detailed financial calculations yet.
+USER STATUS COLORS
+Use these status colors throughout the application:
+Yellow = Registered / Invited
+Green = Paid / Activated
+Red = Eligible to Redeem / Receive Reward
+Blue = Completed 24 house after being red
+
+These colors should be clearly represented in the UI.
+
+INITIAL PAGES
+
+Create:
+
+1. Welcome / Landing page
+2. Registration page
+3. Login page
+4. User Dashboard
+5. My Circle page
+6. Invitations page
+7. Transactions page
+8. Profile page
+9. Settings page
+
+DASHBOARD
+
+The dashboard should have:
+
+- User name
+- Account status
+- Circle status
+- Number of qualifying participants
+- Invitations
+- Payment status
+- Reward status
+- Recent activity
+
+Use cards to display this information.
+
+NAVIGATION
+
+For mobile, create a bottom navigation bar with:
+
+Home
+Circle
+Invite
+History
+Profile
+
+For desktop, use a responsive navigation layout.
+
+DESIGN
+
+Make the interface:
+
+- Modern
+- Professional
+- Mobile-first
+- Responsive
+- Simple to understand
+- Suitable for both mobile and desktop
+
+Use a clean financial/fintech-style interface.
+
+Do not make the interface unnecessarily complicated.
+
+TECHNICAL REQUIREMENTS
+
+Build this as a full-stack application.
+
+Use a clear and maintainable folder structure.
+
+Separate:
+
+- frontend
+- backend
+- database/data layer
+- authentication
+- business logic
+- API/services
+
+Do not hard-code important business rules directly into UI components.
+
+Create reusable components.
+
+SECURITY
+
+Do not store passwords in plain text.
+
+Do not put API keys, database passwords, payment credentials, or other secrets directly in source code.
+
+Use environment variables/secrets where appropriate.
+
+GITHUB
+
+The project will eventually be synchronized with GitHub so I can also work on it using Visual Studio Code.
+
+IMPORTANT DEVELOPMENT RULE
+
+Do NOT invent Khattah business rules.
+
+If a business rule has not been specified, leave it configurable or ask me before implementing it.
+
+Do not implement real payment processing yet.
+
+Do not implement automatic reward payouts yet.
+
+Do not create complicated financial calculations yet.
+
+FIRST TASK
+
+For this first step:
+
+1. Plan the application architecture.
+2. Create the project structure.
+3. Create the responsive frontend layout.
+4. Create the pages listed above.
+5. Create reusable navigation and UI components.
+6. Use sample/mock data only.
+7. Make navigation between the pages work.
+8. Show me the working application in Preview.
+
+Before implementing advanced functionality, stop and wait for my next instructions about the exact Khattah circle, invitation, payment, and reward rules.

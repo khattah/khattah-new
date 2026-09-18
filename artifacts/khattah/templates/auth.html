@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% set is_register = mode == 'register' %}
+{% block title %}{{ 'Create account' if is_register else 'Welcome back' }} — KHATTAH{% endblock %}
+{% block public_content %}
+<div class="auth-shell">
+  <aside class="auth-story">
+    <a class="brand brand--light" href="{{ url_for('welcome') }}">
+      <span class="brand-mark"><i></i><i></i><i></i></span><span>KHATTAH</span>
+    </a>
+    <div>
+      <span class="eyebrow eyebrow--light">Your participation, visible</span>
+      <h2>Move with confidence.<br>See every connection.</h2>
+      <p>A simple home for your circle, invitations, status, and account activity.</p>
+    </div>
+    <small>KHATTAH FOUNDATION · 2026</small>
+  </aside>
+  <main class="auth-panel">
+    <a class="brand auth-mobile-brand" href="{{ url_for('welcome') }}">
+      <span class="brand-mark"><i></i><i></i><i></i></span><span>KHATTAH</span>
+    </a>
+    <div class="auth-form-wrap">
+      <span class="eyebrow">{{ 'Get started' if is_register else 'Welcome back' }}</span>
+      <h1>{{ 'Create your account' if is_register else 'Sign in to KHATTAH' }}</h1>
+      <p>{{ 'Join your circle and keep your progress in view.' if is_register else 'Continue to your personal dashboard.' }}</p>
+      <form method="post" class="form-stack">
+        {% if is_register %}
+        <label>Full name<input type="text" name="name" autocomplete="name" placeholder="Your full name" required></label>
+        {% endif %}
+        <label>Email address<input type="email" name="email" autocomplete="email" placeholder="name@example.com" required></label>
+        <label>Password
+          <span class="password-field">
+            <input type="password" name="password" autocomplete="{{ 'new-password' if is_register else 'current-password' }}" placeholder="Minimum 8 characters" minlength="8" required>
+            <button type="button" class="show-password">Show</button>
+          </span>
+        </label>
+        <button class="button button--dark button--block" type="submit">{{ 'Create account' if is_register else 'Sign in' }} <span>→</span></button>
+      </form>
+      <p class="auth-switch">
+        {{ 'Already have an account?' if is_register else 'New to KHATTAH?' }}
+        <a href="{{ url_for('login' if is_register else 'register') }}">{{ 'Sign in' if is_register else 'Create account' }}</a>
+      </p>
+      {% if not is_register %}
+      <div class="demo-entry"><span>Preview access</span><a href="{{ url_for('demo_login') }}">Open the demo dashboard</a></div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}
