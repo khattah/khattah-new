@@ -7,7 +7,8 @@ from unittest.mock import patch
 from werkzeug.security import generate_password_hash
 
 from app import app, create_invitation, ensure_active_package, get_db, init_db, migrate_db
-from services.invitation_messages import create_message, set_message_state
+from services.khattah import save_package_configuration
+from services.invitation_messages import create_message, make_invite_token, set_message_state
 from services.i18n import translate
 from services.phone_verification import (
     DuplicatePhoneError,
@@ -166,6 +167,185 @@ class PhaseTwoTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.location, "/dashboard")
 
+    def test_login_page_redirects_and_sidebar_account_labels(self):
+        logged_out = self.client.get("/login")
+        self.assertEqual(logged_out.status_code, 200)
+        self.assertIn('name="password"', logged_out.get_data(as_text=True))
+
+        self.login_as(self.member_id)
+        member_redirect = self.client.get("/login")
+        self.assertEqual(member_redirect.status_code, 302)
+        self.assertEqual(member_redirect.location, "/dashboard")
+        member_page = self.client.get("/dashboard").get_data(as_text=True)
+        self.assertIn("Member account", member_page)
+
+        self.login_as(self.admin_id)
+        admin_redirect = self.client.get("/login")
+        self.assertEqual(admin_redirect.status_code, 302)
+        self.assertEqual(admin_redirect.location, "/admin")
+        admin_page = self.client.get("/admin").get_data(as_text=True)
+        self.assertIn("Administrator account", admin_page)
+
+    def test_paid_invitation_links_to_registration_without_duplicate_identity(self):
+        with app.app_context():
+            database = get_db()
+            invitation = create_invitation(
+                database,
+                self.member_id,
+                "omer.ibisolar@gmail.com",
+                self.invitation_message_id,
+            )
+            from services.khattah import activate_invitation
+            activate_invitation(database, invitation["id"], self.admin_id)
+            token = make_invite_token(
+                app.config["SECRET_KEY"], invitation["id"], self.member_id
+            )
+            database.commit()
+
+        claim_page = self.client.get(f"/invite/{token}")
+        self.assertEqual(claim_page.status_code, 200)
+        self.assertIn("Establish member account", claim_page.get_data(as_text=True))
+        response = self.client.post(
+            "/register",
+            data={
+                "name": "Omer Ibisolar",
+                "email": "omer.ibisolar@gmail.com",
+                "password": "OmerSecure123!",
+                "country_code": "+1",
+                "mobile_number": "306 555 0177",
+                "csrf_token": self.csrf_token("/register"),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        with self.client.session_transaction() as session:
+            challenge_token = session["phone_challenge_token"]
+        code = mock_sms_provider.code_for_testing(challenge_token)
+        verified = self.client.post(
+            "/register/verify",
+            data={
+                "verification_code": code,
+                "csrf_token": self.csrf_token("/register"),
+            },
+        )
+        self.assertEqual(verified.status_code, 302)
+        self.assertEqual(verified.location, "/dashboard")
+
+        with app.app_context():
+            database = get_db()
+            users = database.execute(
+                "SELECT id, status FROM users WHERE lower(email) = lower(?)",
+                ("omer.ibisolar@gmail.com",),
+            ).fetchall()
+            self.assertEqual(len(users), 1)
+            self.assertEqual(users[0]["status"], "activated")
+            linked = database.execute(
+                "SELECT participant_user_id, status FROM invitations WHERE recipient = ?",
+                ("omer.ibisolar@gmail.com",),
+            ).fetchone()
+            self.assertEqual(linked["participant_user_id"], users[0]["id"])
+            self.assertEqual(linked["status"], "paid")
+            own_package = database.execute(
+                "SELECT required_participants FROM circles WHERE user_id = ?",
+                (users[0]["id"],),
+            ).fetchone()
+            self.assertIsNotNone(own_package)
+
+    def test_paid_invitation_cannot_be_claimed_without_signed_link(self):
+        email = "unclaimed-paid@test.local"
+        with app.app_context():
+            database = get_db()
+            invitation = create_invitation(
+                database, self.member_id, email, self.invitation_message_id
+            )
+            from services.khattah import activate_invitation
+            activate_invitation(database, invitation["id"], self.admin_id)
+            database.commit()
+
+        response = self.client.post(
+            "/register",
+            data={
+                "name": "Unclaimed Paid",
+                "email": email,
+                "password": "StrongPass123!",
+                "country_code": "+1",
+                "mobile_number": "3065550166",
+                "csrf_token": self.csrf_token("/register"),
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        with self.client.session_transaction() as session:
+            code = mock_sms_provider.code_for_testing(session["phone_challenge_token"])
+        verified = self.client.post(
+            "/register/verify",
+            data={
+                "verification_code": code,
+                "csrf_token": self.csrf_token("/register"),
+            },
+        )
+        self.assertEqual(verified.status_code, 302)
+        dashboard = self.client.get(verified.location)
+        self.assertEqual(dashboard.status_code, 200)
+        with app.app_context():
+            database = get_db()
+            user = database.execute(
+                "SELECT id, status FROM users WHERE email = ?", (email,)
+            ).fetchone()
+            linked = database.execute(
+                "SELECT participant_user_id FROM invitations WHERE id = ?",
+                (invitation["id"],),
+            ).fetchone()
+            self.assertEqual(user["status"], "registered")
+            self.assertIsNone(linked["participant_user_id"])
+
+    def test_migration_reconciles_existing_linked_paid_member(self):
+        with app.app_context():
+            database = get_db()
+            participant = database.execute(
+                """
+                INSERT INTO users(name,email,password_hash,status,joined_at,is_admin)
+                VALUES('Existing Paid','existing-paid@test.local',?,'registered','2026-09-18',0)
+                """,
+                (generate_password_hash("Existing123!"),),
+            )
+            participant_id = participant.lastrowid
+            database.execute("INSERT INTO settings(user_id) VALUES(?)", (participant_id,))
+            invitation = create_invitation(
+                database,
+                self.member_id,
+                "existing-paid@test.local",
+                self.invitation_message_id,
+            )
+            from services.khattah import activate_invitation
+            activate_invitation(database, invitation["id"], self.admin_id)
+            database.execute(
+                "UPDATE users SET status='registered' WHERE id=?", (participant_id,)
+            )
+            database.execute("DELETE FROM schema_migrations WHERE version=206")
+            database.commit()
+            migrate_db()
+            reconciled = database.execute(
+                "SELECT status FROM users WHERE id=?", (participant_id,)
+            ).fetchone()
+            self.assertEqual(reconciled["status"], "activated")
+            database.execute(
+                "UPDATE users SET status='registered' WHERE id=?", (participant_id,)
+            )
+            database.execute(
+                "UPDATE invitations SET participant_user_id=NULL WHERE id=?",
+                (invitation["id"],),
+            )
+            database.commit()
+            migrate_db()
+            unchanged = database.execute(
+                "SELECT status FROM users WHERE id=?", (participant_id,)
+            ).fetchone()
+            still_unlinked = database.execute(
+                "SELECT participant_user_id FROM invitations WHERE id=?",
+                (invitation["id"],),
+            ).fetchone()
+            self.assertEqual(unchanged["status"], "registered")
+            self.assertIsNone(still_unlinked["participant_user_id"])
+
     def test_development_demo_member_and_admin_credentials(self):
         app.config["SEED_DEMO_DATA"] = True
         with app.app_context():
@@ -312,6 +492,134 @@ class PhaseTwoTests(unittest.TestCase):
             ).fetchone()
             self.assertEqual(circle["status"], "completed")
             self.assertEqual(reward["status"], "available")
+
+    def test_configurable_package_count_and_immutable_history_snapshots(self):
+        with app.app_context():
+            database = get_db()
+            save_package_configuration(
+                database,
+                {
+                    "sequence_number": 1,
+                    "name_en": "Starter Configured",
+                    "name_ar": "الأساسية المضبوطة",
+                    "amount": "125.50",
+                    "currency": "CAD",
+                    "qualifying_count": 3,
+                    "reward_amount": "40.00",
+                    "reward_currency": "CAD",
+                    "reward_config_json": '{"kind":"fixed"}',
+                    "display_order": 1,
+                    "is_active": "on",
+                },
+                self.admin_id,
+            )
+            user = database.execute(
+                """
+                INSERT INTO users(name,email,password_hash,status,joined_at,is_admin)
+                VALUES('Configured Member','configured@test.local',?,'activated','2026-09-18',0)
+                """,
+                (generate_password_hash("Configured123!"),),
+            )
+            configured_user_id = user.lastrowid
+            database.execute("INSERT INTO settings(user_id) VALUES(?)", (configured_user_id,))
+            package = ensure_active_package(database, configured_user_id)
+            self.assertEqual(package["required_participants"], 3)
+            database.commit()
+
+            from services.khattah import activate_invitation
+            for index in range(3):
+                invitation = create_invitation(
+                    database, configured_user_id, f"configured-{index}@test.local"
+                )
+                activate_invitation(database, invitation["id"], self.admin_id)
+            database.commit()
+
+            completed = database.execute(
+                """
+                SELECT status, required_participants, amount_minor_snapshot,
+                       reward_amount_minor_snapshot
+                FROM circles WHERE user_id = ?
+                """,
+                (configured_user_id,),
+            ).fetchone()
+            reward = database.execute(
+                "SELECT amount_minor, currency FROM rewards WHERE user_id = ?",
+                (configured_user_id,),
+            ).fetchone()
+            self.assertEqual(
+                (
+                    completed["status"],
+                    completed["required_participants"],
+                    completed["amount_minor_snapshot"],
+                    completed["reward_amount_minor_snapshot"],
+                ),
+                ("completed", 3, 12550, 4000),
+            )
+            self.assertEqual((reward["amount_minor"], reward["currency"]), (4000, "CAD"))
+
+            save_package_configuration(
+                database,
+                {
+                    "sequence_number": 1,
+                    "name_en": "Starter Future",
+                    "name_ar": "الأساسية المستقبلية",
+                    "qualifying_count": 7,
+                    "display_order": 1,
+                    "is_active": "on",
+                    "reward_config_json": "{}",
+                },
+                self.admin_id,
+            )
+            database.commit()
+            unchanged = database.execute(
+                "SELECT required_participants, reward_amount_minor_snapshot FROM circles WHERE user_id = ?",
+                (configured_user_id,),
+            ).fetchone()
+            unchanged_reward = database.execute(
+                "SELECT amount_minor, currency FROM rewards WHERE user_id = ?",
+                (configured_user_id,),
+            ).fetchone()
+            self.assertEqual(
+                (unchanged["required_participants"], unchanged["reward_amount_minor_snapshot"]),
+                (3, 4000),
+            )
+            self.assertEqual(
+                (unchanged_reward["amount_minor"], unchanged_reward["currency"]),
+                (4000, "CAD"),
+            )
+
+        self.login_as(configured_user_id)
+        history_page = self.client.get("/packages").get_data(as_text=True)
+        self.assertIn("Starter Configured", history_page)
+        self.assertNotIn("Starter Future", history_page)
+
+    def test_package_configuration_admin_authorization_and_migration_idempotence(self):
+        with app.app_context():
+            init_db()
+            init_db()
+            database = get_db()
+            current = database.execute(
+                "SELECT sequence_number, qualifying_count FROM package_configurations WHERE is_current=1 ORDER BY sequence_number"
+            ).fetchall()
+            self.assertEqual([row["sequence_number"] for row in current], [1, 2, 3, 4, 5])
+            self.assertTrue(all(row["qualifying_count"] == 5 for row in current))
+
+        self.login_as(self.member_id)
+        self.assertEqual(self.client.get("/admin/packages").status_code, 302)
+        token = self.csrf_token("/dashboard")
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/admin/package-configurations",
+                json={"sequence_number": 6},
+                headers={"X-CSRF-Token": token},
+            ).status_code,
+            403,
+        )
+
+        self.login_as(self.admin_id)
+        admin_page = self.client.get("/admin/packages")
+        self.assertEqual(admin_page.status_code, 200)
+        self.assertIn("Starter", admin_page.get_data(as_text=True))
 
     def test_multiple_packages_are_retained_without_monthly_limit(self):
         self.create_invitations(1, 5)
@@ -859,7 +1167,7 @@ class PhaseTwoTests(unittest.TestCase):
             self.assertIn(expected, rendered)
             if path == "/packages":
                 self.assertIn(
-                    "يملأ أول خمسة مشاركين مدفوعين أو مفعّلين",
+                    "يملأ المشاركون المدفوعون أو المفعّلون مواضع التأهل المضبوطة",
                     rendered,
                 )
                 self.assertNotIn(

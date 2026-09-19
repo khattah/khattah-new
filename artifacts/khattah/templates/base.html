@@ -30,7 +30,7 @@
         <span class="avatar">{{ current_user['name'][:1] }}</span>
         <div>
           <strong>{{ current_user['name'] }}</strong>
-          <small>{{ t('Member account') }}</small>
+          <small>{{ t('Administrator account') if current_user['is_admin'] else t('Member account') }}</small>
         </div>
       </div>
       <nav class="side-nav" aria-label="{{ t('Primary navigation') }}">
@@ -47,7 +47,7 @@
       </nav>
       <div class="sidebar-note">
         <strong>{{ t('Event-driven packages') }}</strong>
-        <p>{{ t('Five paid, qualified participants complete a package.') }}</p>
+        <p>{{ t('A package completes when its configured number of paid, qualified participants is reached.') }}</p>
       </div>
       <a class="sign-out" href="{{ url_for('logout') }}">{{ t('Sign out') }} <span>→</span></a>
     </aside>

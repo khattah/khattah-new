@@ -1,11 +1,14 @@
+import json
+import re
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 
 # Package terminology is canonical in the application layer. The persistence
 # schema still uses the historical circle_* names for data compatibility.
 PACKAGE_SIZE = 5
 CIRCLE_SIZE = PACKAGE_SIZE  # Compatibility alias for existing callers.
-QUALIFICATION_POLICY = "first_five_activated"
+QUALIFICATION_POLICY = "configured_activated_participants"
 
 STATUS_META = {
     "invited": {"label": "Invited", "tone": "yellow"},
@@ -34,6 +37,179 @@ def as_status(value):
 
 def serialize_row(row):
     return dict(row) if row is not None else None
+
+
+def _minor_units(value, field_name):
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        amount = Decimal(text)
+    except InvalidOperation as error:
+        raise ValueError(f"{field_name} must be a valid amount") from error
+    if amount < 0:
+        raise ValueError(f"{field_name} cannot be negative")
+    return int((amount * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def format_money(amount_minor, currency):
+    if amount_minor is None or not currency:
+        return "Not configured"
+    return f"{currency} {Decimal(amount_minor) / Decimal(100):,.2f}"
+
+
+def validate_package_configuration(values, *, existing_sequence=None):
+    sequence_value = values.get("sequence_number", existing_sequence)
+    try:
+        sequence_number = int(sequence_value)
+        qualifying_count = int(values.get("qualifying_count", 0))
+        display_order = int(values.get("display_order", sequence_number))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Package sequence, display order, and qualifying count must be whole numbers") from error
+    if sequence_number <= 0 or qualifying_count <= 0:
+        raise ValueError("Package sequence and qualifying count must be positive")
+    name_en = str(values.get("name_en", "")).strip()[:80]
+    name_ar = str(values.get("name_ar", "")).strip()[:80]
+    if not name_en or not name_ar:
+        raise ValueError("English and Arabic package names are required")
+    currency = str(values.get("currency", "")).strip().upper()
+    reward_currency = str(values.get("reward_currency", currency)).strip().upper()
+    for label, value in (("currency", currency), ("reward currency", reward_currency)):
+        if value and not re.fullmatch(r"[A-Z]{3}", value):
+            raise ValueError(f"{label} must be a three-letter currency code")
+    reward_config_text = str(values.get("reward_config_json", "") or "{}").strip()
+    try:
+        reward_config = json.loads(reward_config_text)
+    except json.JSONDecodeError as error:
+        raise ValueError("Reward configuration must be valid JSON") from error
+    if not isinstance(reward_config, dict):
+        raise ValueError("Reward configuration must be a JSON object")
+    return {
+        "sequence_number": sequence_number,
+        "name_en": name_en,
+        "name_ar": name_ar,
+        "amount_minor": _minor_units(values.get("amount"), "Package amount"),
+        "currency": currency,
+        "qualifying_count": qualifying_count,
+        "reward_amount_minor": _minor_units(values.get("reward_amount"), "Reward amount"),
+        "reward_currency": reward_currency,
+        "reward_config_json": json.dumps(reward_config, sort_keys=True, separators=(",", ":")),
+        "display_order": max(0, display_order),
+        "is_active": int(str(values.get("is_active", "")).lower() in {"1", "true", "yes", "on"}),
+    }
+
+
+def list_package_configurations(database, *, include_history=False):
+    where = "" if include_history else "WHERE pc.is_current = 1"
+    rows = database.execute(
+        f"""
+        SELECT pc.*, u.name AS created_by_name
+        FROM package_configurations pc
+        LEFT JOIN users u ON u.id = pc.created_by_user_id
+        {where}
+        ORDER BY pc.display_order, pc.sequence_number, pc.version DESC
+        """
+    ).fetchall()
+    return [
+        {
+            **serialize_row(row),
+            "amount": "" if row["amount_minor"] is None else f"{row['amount_minor'] / 100:.2f}",
+            "reward_amount": "" if row["reward_amount_minor"] is None else f"{row['reward_amount_minor'] / 100:.2f}",
+            "amount_label": format_money(row["amount_minor"], row["currency"]),
+            "reward_amount_label": format_money(row["reward_amount_minor"], row["reward_currency"]),
+        }
+        for row in rows
+    ]
+
+
+def save_package_configuration(database, values, actor_user_id):
+    sequence = values.get("sequence_number")
+    current = None
+    if sequence not in (None, ""):
+        try:
+            current = database.execute(
+                "SELECT * FROM package_configurations WHERE sequence_number = ? AND is_current = 1",
+                (int(sequence),),
+            ).fetchone()
+        except (TypeError, ValueError):
+            current = None
+    item = validate_package_configuration(
+        values,
+        existing_sequence=current["sequence_number"] if current else None,
+    )
+    current = database.execute(
+        "SELECT * FROM package_configurations WHERE sequence_number = ? AND is_current = 1",
+        (item["sequence_number"],),
+    ).fetchone()
+    version = 1 if current is None else current["version"] + 1
+    if current is not None:
+        database.execute(
+            "UPDATE package_configurations SET is_current = 0 WHERE id = ?",
+            (current["id"],),
+        )
+    cursor = database.execute(
+        """
+        INSERT INTO package_configurations (
+            sequence_number, version, name_en, name_ar, amount_minor, currency,
+            qualifying_count, reward_amount_minor, reward_currency,
+            reward_config_json, display_order, is_active, is_current,
+            created_at, created_by_user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+        """,
+        (
+            item["sequence_number"], version, item["name_en"], item["name_ar"],
+            item["amount_minor"], item["currency"], item["qualifying_count"],
+            item["reward_amount_minor"], item["reward_currency"],
+            item["reward_config_json"], item["display_order"], item["is_active"],
+            utc_now(), actor_user_id,
+        ),
+    )
+    database.execute(
+        """
+        INSERT INTO package_configuration_audit (
+            package_configuration_id, sequence_number, version, actor_user_id,
+            action, previous_value, new_value, occurred_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            cursor.lastrowid, item["sequence_number"], version, actor_user_id,
+            "created" if current is None else "updated",
+            json.dumps(serialize_row(current), sort_keys=True, default=str) if current else None,
+            json.dumps(item, sort_keys=True), utc_now(),
+        ),
+    )
+    return database.execute(
+        "SELECT * FROM package_configurations WHERE id = ?", (cursor.lastrowid,)
+    ).fetchone()
+
+
+def _configuration_for_sequence(database, sequence_number):
+    row = database.execute(
+        """
+        SELECT * FROM package_configurations
+        WHERE is_current = 1 AND is_active = 1 AND sequence_number = ?
+        """,
+        (sequence_number,),
+    ).fetchone()
+    if row is not None:
+        return row
+    row = database.execute(
+        """
+        SELECT * FROM package_configurations
+        WHERE is_current = 1 AND is_active = 1 AND sequence_number <= ?
+        ORDER BY sequence_number DESC LIMIT 1
+        """,
+        (sequence_number,),
+    ).fetchone()
+    if row is not None:
+        return row
+    return database.execute(
+        """
+        SELECT * FROM package_configurations
+        WHERE is_current = 1 AND is_active = 1
+        ORDER BY display_order, sequence_number LIMIT 1
+        """
+    ).fetchone()
 
 
 def record_event(database, user_id, event_type, description, entity_type=None, entity_id=None):
@@ -74,13 +250,28 @@ def ensure_active_circle(database, user_id):
         "SELECT COALESCE(MAX(sequence_number), 0) + 1 AS next_number FROM circles WHERE user_id = ?",
         (user_id,),
     ).fetchone()["next_number"]
+    configuration = _configuration_for_sequence(database, sequence)
+    if configuration is None:
+        raise ValueError("No active package configuration is available")
     cursor = database.execute(
         """
         INSERT INTO circles
-            (user_id, sequence_number, status, required_participants, created_at)
-        VALUES (?, ?, 'active', ?, ?)
+            (user_id, sequence_number, status, required_participants, created_at,
+             package_configuration_id, configuration_version,
+             package_name_en_snapshot, package_name_ar_snapshot,
+             amount_minor_snapshot, currency_snapshot,
+             reward_amount_minor_snapshot, reward_currency_snapshot,
+             reward_config_snapshot_json)
+        VALUES (?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (user_id, sequence, CIRCLE_SIZE, utc_now()),
+        (
+            user_id, sequence, configuration["qualifying_count"], utc_now(),
+            configuration["id"], configuration["version"],
+            configuration["name_en"], configuration["name_ar"],
+            configuration["amount_minor"], configuration["currency"],
+            configuration["reward_amount_minor"], configuration["reward_currency"],
+            configuration["reward_config_json"],
+        ),
     )
     circle_id = cursor.lastrowid
     record_event(
@@ -106,12 +297,22 @@ def start_new_circle(database, user_id):
 
 
 def create_invitation(database, user_id, recipient, invitation_message_id=None):
+    linked_user = database.execute(
+        "SELECT id FROM users WHERE lower(email) = lower(?)",
+        (recipient.strip(),),
+    ).fetchone() if "@" in recipient else None
     cursor = database.execute(
         """
-        INSERT INTO invitations (user_id, recipient, status, sent_at, invitation_message_id)
-        VALUES (?, ?, 'pending', ?, ?)
+        INSERT INTO invitations (
+            user_id, recipient, status, sent_at, invitation_message_id,
+            participant_user_id
+        )
+        VALUES (?, ?, 'pending', ?, ?, ?)
         """,
-        (user_id, recipient, utc_now()[:10], invitation_message_id),
+        (
+            user_id, recipient, utc_now()[:10], invitation_message_id,
+            linked_user["id"] if linked_user else None,
+        ),
     )
     invitation_id = cursor.lastrowid
     record_event(
@@ -158,6 +359,11 @@ def activate_invitation(database, invitation_id, administrator_id):
     database.execute(
         "UPDATE invitations SET status = 'paid' WHERE id = ?", (invitation_id,)
     )
+    if invitation["participant_user_id"]:
+        database.execute(
+            "UPDATE users SET status = 'activated' WHERE id = ?",
+            (invitation["participant_user_id"],),
+        )
     record_event(
         database,
         owner_id,
@@ -216,10 +422,21 @@ def activate_invitation(database, invitation_id, administrator_id):
         if reward is None:
             reward_cursor = database.execute(
                 """
-                INSERT INTO rewards (user_id, circle_id, status, eligible_at)
-                VALUES (?, ?, 'available', ?)
+                INSERT INTO rewards (
+                    user_id, circle_id, status, eligible_at, amount_minor,
+                    currency, reward_config_json, package_configuration_id,
+                    configuration_version
+                )
+                VALUES (?, ?, 'available', ?, ?, ?, ?, ?, ?)
                 """,
-                (owner_id, circle["id"], completed_at),
+                (
+                    owner_id, circle["id"], completed_at,
+                    circle["reward_amount_minor_snapshot"],
+                    circle["reward_currency_snapshot"],
+                    circle["reward_config_snapshot_json"],
+                    circle["package_configuration_id"],
+                    circle["configuration_version"],
+                ),
             )
             reward_created = True
             record_event(
@@ -295,6 +512,10 @@ def get_circle_by_id(database, circle_id):
         **serialize_row(circle),
         "status": as_status(circle["status"]),
         "qualified_count": len(participant_data),
+        "amount_label": format_money(circle["amount_minor_snapshot"], circle["currency_snapshot"]),
+        "reward_amount_label": format_money(
+            circle["reward_amount_minor_snapshot"], circle["reward_currency_snapshot"]
+        ),
         "participants": participant_data,
         "slots": slots,
     }
@@ -367,8 +588,11 @@ def get_dashboard(database, user_id):
         "completed_package_count": history_count,
         "qualifying_participants": {
             "value": current_circle["qualified_count"] if current_circle else 0,
-            "target": PACKAGE_SIZE,
-            "label": f"{current_circle['qualified_count'] if current_circle else 0} / {PACKAGE_SIZE} Qualified",
+            "target": current_circle["required_participants"] if current_circle else PACKAGE_SIZE,
+            "label": (
+                f"{current_circle['qualified_count'] if current_circle else 0} / "
+                f"{current_circle['required_participants'] if current_circle else PACKAGE_SIZE} Qualified"
+            ),
         },
         "invitation_count": invitation_count,
         "payment_status": {
@@ -390,7 +614,7 @@ def get_circle(database, user_id):
         "current": current,
         "history": get_circle_history(database, user_id),
         "qualification_policy": QUALIFICATION_POLICY,
-        "target_description": "The first five paid / activated participants fill the five qualifying positions in a package.",
+        "target_description": "Paid / activated participants fill the configured qualifying positions in this package.",
     }
 
 
@@ -439,7 +663,8 @@ def get_rewards(database, user_id):
     rows = database.execute(
         """
         SELECT r.id, r.status, r.eligible_at, r.redeemed_at,
-               c.id AS circle_id, c.sequence_number
+               r.amount_minor, r.currency, r.reward_config_json,
+               c.id AS circle_id, c.sequence_number, c.required_participants
         FROM rewards r
         JOIN circles c ON c.id = r.circle_id
         WHERE r.user_id = ?
@@ -452,6 +677,7 @@ def get_rewards(database, user_id):
             **serialize_row(row),
             "package_id": row["circle_id"],
             "status_meta": as_status(row["status"]),
+            "amount_label": format_money(row["amount_minor"], row["currency"]),
         }
         for row in rows
     ]
@@ -485,6 +711,7 @@ def get_admin_overview(database):
     circles = database.execute(
         """
         SELECT c.id, c.sequence_number, c.status, c.created_at, c.completed_at,
+               c.required_participants,
                u.name AS owner_name,
                COUNT(cp.id) AS qualified_count
         FROM circles c
@@ -496,7 +723,8 @@ def get_admin_overview(database):
     ).fetchall()
     rewards = database.execute(
         """
-        SELECT r.id, r.status, r.eligible_at, u.name AS owner_name, c.sequence_number
+        SELECT r.id, r.status, r.eligible_at, r.amount_minor, r.currency,
+               u.name AS owner_name, c.sequence_number
         FROM rewards r
         JOIN users u ON u.id = r.user_id
         JOIN circles c ON c.id = r.circle_id

@@ -119,6 +119,30 @@ class AppearanceTests(unittest.TestCase):
                                      json={"action": "activate", "kind": "frontend", "template": "modern"})
         self.assertEqual(response.status_code, 403)
 
+    def test_appearance_metadata_does_not_change_business_configuration(self):
+        with app.app_context():
+            db = get_db()
+            actor = db.execute("SELECT id FROM users WHERE is_admin=1").fetchone()[0]
+            before = dict(db.execute(
+                "SELECT * FROM package_configurations WHERE sequence_number=1 AND is_current=1"
+            ).fetchone())
+            save_package(
+                db,
+                {
+                    "sequence_number": 1,
+                    "name_en": "Presentation only",
+                    "name_ar": "للعرض فقط",
+                    "display_order": 8,
+                    "is_visible": 1,
+                    "is_active": 1,
+                },
+                actor,
+            )
+            after = dict(db.execute(
+                "SELECT * FROM package_configurations WHERE sequence_number=1 AND is_current=1"
+            ).fetchone())
+            self.assertEqual(before, after)
+
 
 if __name__ == "__main__":
     unittest.main()

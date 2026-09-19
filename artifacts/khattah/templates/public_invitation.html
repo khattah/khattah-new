@@ -10,6 +10,7 @@
       <h1>{{ message.subject if message else t('You are invited') }}</h1>
       <p class="invitation-message">{{ message.body if message else t('You have been invited to join KHATTAH.') }}</p>
       <p class="muted-count">{{ t('Invited by') }} {{ invitation.inviter_name }}</p>
+      <a class="button button--dark" href="{{ url_for('register') }}">{{ t('Establish member account') }}</a>
     </section>
   {% endif %}
 </main>

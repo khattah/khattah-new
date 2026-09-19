@@ -17,6 +17,9 @@
     <section class="panel admin-section">
      <div class="panel-heading"><div><span class="eyebrow">{{ t('Presentation') }}</span><h2>{{ t('Appearance themes') }}</h2><p>{{ t('Manage frontend and admin themes, palettes, and package labels.') }}</p></div><a class="button button--coral" href="{{ url_for('admin_appearance') }}">{{ t('Open Appearance') }}</a></div>
     </section>
+    <section class="panel admin-section">
+      <div class="panel-heading"><div><span class="eyebrow">{{ t('Package management') }}</span><h2>{{ t('Admin Packages') }}</h2><p>{{ t('Configure amounts, currencies, qualifying counts, rewards, and future availability.') }}</p></div><a class="button button--coral" href="{{ url_for('admin_packages') }}">{{ t('Open Packages') }}</a></div>
+    </section>
    <section class="panel admin-section">
     <div class="panel-heading"><div><span class="eyebrow">{{ t('Development controls') }}</span><h2>{{ t('Mock payment / activation queue') }}</h2></div></div>
     <div class="table-wrap"><table><thead><tr><th>{{ t('Participant') }}</th><th>{{ t('Invited by') }}</th><th>{{ t('Status') }}</th><th>{{ t('Action') }}</th></tr></thead><tbody>
@@ -28,7 +31,7 @@
 
   <div class="admin-grid">
      <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Package ledger') }}</span><h2>{{ t('All packages') }}</h2></div></div><div class="history-list">
-      {% for package in data.packages %}<article><span class="history-id">#{{ package.id }}</span><div><strong>{{ package.owner_name }} · {{ t('Package') }} #{{ package.sequence_number }}</strong><small>{{ package.qualified_count }}/5 {{ t('qualified') }}</small></div><span class="status-chip status-chip--{{ 'red' if package.status == 'completed' else 'green' }}"><i></i>{{ t('Completed') if package.status == 'completed' else t('Active') }}</span></article>{% endfor %}
+      {% for package in data.packages %}<article><span class="history-id">#{{ package.id }}</span><div><strong>{{ package.owner_name }} · {{ t('Package') }} #{{ package.sequence_number }}</strong><small>{{ package.qualified_count }}/{{ package.required_participants }} {{ t('qualified') }}</small></div><span class="status-chip status-chip--{{ 'red' if package.status == 'completed' else 'green' }}"><i></i>{{ t('Completed') if package.status == 'completed' else t('Active') }}</span></article>{% endfor %}
     </div></section>
     <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Eligibility ledger') }}</span><h2>{{ t('Rewards') }}</h2></div></div><div class="history-list">
       {% for reward in data.rewards %}<article><span class="history-id">◇</span><div><strong>{{ reward.owner_name }}</strong><small>{{ t('Package') }} #{{ reward.sequence_number }} · {{ reward.eligible_at[:10] }}</small></div><span class="status-chip status-chip--blue"><i></i>{{ t('Available') }}</span></article>{% else %}<div class="empty-state">{{ t('No rewards yet.') }}</div>{% endfor %}

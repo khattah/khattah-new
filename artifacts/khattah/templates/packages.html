@@ -2,7 +2,7 @@
 {% block title %}{{ t('My Packages') }} — KHATTAH{% endblock %}
 {% block content %}
 <div class="page-wrap">
-  <section class="page-heading"><div><span class="eyebrow">{{ t('Event-driven participation') }}</span><h1>{{ t('My Packages') }}</h1><p>{{ t('Each package has its own ID, five qualifying positions, and permanent history.') }}</p></div><a class="button button--coral" href="{{ url_for('invitations') }}">{{ t('Add invitation') }} <span>↗</span></a></section>
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Event-driven participation') }}</span><h1>{{ t('My Packages') }}</h1><p>{{ t('Each package has its own ID, configured qualifying positions, and permanent history.') }}</p></div><a class="button button--coral" href="{{ url_for('invitations') }}">{{ t('Add invitation') }} <span>↗</span></a></section>
 
   {% set package = data.current %}
   {% set package_meta = package_display(package.sequence_number) %}
@@ -12,11 +12,11 @@
         <h2>{{ package_meta.name }}</h2>
         <p>{{ package_meta.description or t(data.target_description) }}</p>
     </div>
-     <div class="summary-number"><strong>{{ package.qualified_count }}/5</strong><span>{{ t('Qualified participants') }}</span></div>
+     <div class="summary-number"><strong>{{ package.qualified_count }}/{{ package.required_participants }}</strong><span>{{ t('Qualified participants') }}</span></div>
   </section>
 
   <section class="qualification-board">
-     <div class="panel-heading"><div><span class="eyebrow">{{ t('Package progress') }}</span><h2>{{ t('Five qualifying positions') }}</h2></div><strong>{{ package.qualified_count }} / {{ package.required_participants }} {{ t('Qualified') }}</strong></div>
+     <div class="panel-heading"><div><span class="eyebrow">{{ t('Package progress') }}</span><h2>{{ package.required_participants }} {{ t('qualifying positions') }}</h2></div><strong>{{ package.qualified_count }} / {{ package.required_participants }} {{ t('Qualified') }}</strong></div>
     <div class="qualification-slots">
       {% for slot in package.slots %}
       <article class="qualification-slot {{ 'qualification-slot--filled' if slot.filled }}">
@@ -42,7 +42,7 @@
      <div class="panel-heading"><div><span class="eyebrow">{{ t('Permanent record') }}</span><h2>{{ t('Package history') }}</h2></div><span class="muted-count">{{ data.history|length }} {{ t('total') }}</span></div>
     <div class="history-list">
       {% for item in data.history %}
-       {% set item_meta = package_display(item.sequence_number) %}<article><span class="history-id">#{{ item.sequence_number }}</span><div><strong>{{ item_meta.name }}</strong><small>{{ t('Created') }} {{ item.created_at[:10] }}{% if item.completed_at %} · {{ t('Completed') }} {{ item.completed_at[:10] }}{% endif %}</small></div><span class="status-chip status-chip--{{ item.status.tone }}"><i></i>{{ t(item.status.label) }}</span><b>{{ item.qualified_count }}/5</b></article>
+       {% set item_meta = package_display(item.sequence_number) %}<article><span class="history-id">#{{ item.sequence_number }}</span><div><strong>{{ item.package_name_ar_snapshot if current_language == 'ar' else item.package_name_en_snapshot }}</strong><small>{{ t('Created') }} {{ item.created_at[:10] }}{% if item.completed_at %} · {{ t('Completed') }} {{ item.completed_at[:10] }}{% endif %}</small></div><span class="status-chip status-chip--{{ item.status.tone }}"><i></i>{{ t(item.status.label) }}</span><b>{{ item.qualified_count }}/{{ item.required_participants }}</b></article>
       {% endfor %}
     </div>
   </section>

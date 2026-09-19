@@ -31,6 +31,7 @@ from services.khattah import (
     get_circle_history,
     get_package,
     get_package_history,
+    list_package_configurations,
     get_dashboard,
     get_invitations,
     get_profile,
@@ -39,6 +40,7 @@ from services.khattah import (
     get_transactions,
     start_new_circle,
     start_new_package,
+    save_package_configuration,
     update_profile,
     update_settings,
     utc_now,
@@ -188,6 +190,8 @@ def migrate_db():
         database.execute("ALTER TABLE users ADD COLUMN phone_verified_at TEXT")
     if not _column_exists(database, "invitations", "invitation_message_id"):
         database.execute("ALTER TABLE invitations ADD COLUMN invitation_message_id INTEGER")
+    if not _column_exists(database, "invitations", "participant_user_id"):
+        database.execute("ALTER TABLE invitations ADD COLUMN participant_user_id INTEGER REFERENCES users(id)")
 
     database.executescript(
         """
@@ -427,6 +431,174 @@ def migrate_db():
             (sequence, name_en, name_ar, sequence, utc_now()))
     database.execute(
         "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (204, ?)",
+        (utc_now(),),
+    )
+    database.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS package_configurations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sequence_number INTEGER NOT NULL CHECK (sequence_number > 0),
+            version INTEGER NOT NULL CHECK (version > 0),
+            name_en TEXT NOT NULL,
+            name_ar TEXT NOT NULL,
+            amount_minor INTEGER,
+            currency TEXT NOT NULL DEFAULT '',
+            qualifying_count INTEGER NOT NULL CHECK (qualifying_count > 0),
+            reward_amount_minor INTEGER,
+            reward_currency TEXT NOT NULL DEFAULT '',
+            reward_config_json TEXT NOT NULL DEFAULT '{}',
+            display_order INTEGER NOT NULL DEFAULT 0,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            is_current INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            created_by_user_id INTEGER,
+            FOREIGN KEY (created_by_user_id) REFERENCES users(id),
+            UNIQUE (sequence_number, version)
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS current_package_configuration
+            ON package_configurations(sequence_number) WHERE is_current = 1;
+        CREATE TABLE IF NOT EXISTS package_configuration_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            package_configuration_id INTEGER NOT NULL,
+            sequence_number INTEGER NOT NULL,
+            version INTEGER NOT NULL,
+            actor_user_id INTEGER,
+            action TEXT NOT NULL,
+            previous_value TEXT,
+            new_value TEXT NOT NULL,
+            occurred_at TEXT NOT NULL,
+            FOREIGN KEY (package_configuration_id) REFERENCES package_configurations(id),
+            FOREIGN KEY (actor_user_id) REFERENCES users(id)
+        );
+        """
+    )
+    package_defaults = [
+        (1, "Starter", "الأساسية"), (2, "Standard", "القياسية"),
+        (3, "Advanced", "المتقدمة"), (4, "Premium", "المميزة"),
+        (5, "Elite", "النخبة"),
+    ]
+    for sequence, name_en, name_ar in package_defaults:
+        database.execute(
+            """
+            INSERT OR IGNORE INTO package_configurations (
+                sequence_number, version, name_en, name_ar, qualifying_count,
+                reward_config_json, display_order, is_active, is_current, created_at
+            ) VALUES (?, 1, ?, ?, 5, '{}', ?, 1, 1, ?)
+            """,
+            (sequence, name_en, name_ar, sequence, utc_now()),
+        )
+    circle_snapshot_columns = {
+        "package_configuration_id": "INTEGER REFERENCES package_configurations(id)",
+        "configuration_version": "INTEGER NOT NULL DEFAULT 1",
+        "package_name_en_snapshot": "TEXT NOT NULL DEFAULT ''",
+        "package_name_ar_snapshot": "TEXT NOT NULL DEFAULT ''",
+        "amount_minor_snapshot": "INTEGER",
+        "currency_snapshot": "TEXT NOT NULL DEFAULT ''",
+        "reward_amount_minor_snapshot": "INTEGER",
+        "reward_currency_snapshot": "TEXT NOT NULL DEFAULT ''",
+        "reward_config_snapshot_json": "TEXT NOT NULL DEFAULT '{}'",
+    }
+    for column, definition in circle_snapshot_columns.items():
+        if not _column_exists(database, "circles", column):
+            database.execute(f"ALTER TABLE circles ADD COLUMN {column} {definition}")
+    reward_snapshot_columns = {
+        "amount_minor": "INTEGER",
+        "currency": "TEXT NOT NULL DEFAULT ''",
+        "reward_config_json": "TEXT NOT NULL DEFAULT '{}'",
+        "package_configuration_id": "INTEGER REFERENCES package_configurations(id)",
+        "configuration_version": "INTEGER NOT NULL DEFAULT 1",
+    }
+    for column, definition in reward_snapshot_columns.items():
+        if not _column_exists(database, "rewards", column):
+            database.execute(f"ALTER TABLE rewards ADD COLUMN {column} {definition}")
+    database.execute(
+        """
+        UPDATE circles
+        SET package_configuration_id = COALESCE(
+                package_configuration_id,
+                (SELECT id FROM package_configurations pc
+                 WHERE pc.sequence_number = circles.sequence_number AND pc.version = 1),
+                (SELECT id FROM package_configurations pc
+                 WHERE pc.sequence_number = 1 AND pc.version = 1)
+            ),
+            configuration_version = COALESCE(configuration_version, 1),
+            package_name_en_snapshot = CASE WHEN package_name_en_snapshot = '' THEN
+                COALESCE((SELECT name_en FROM package_configurations pc
+                          WHERE pc.id = COALESCE(
+                              circles.package_configuration_id,
+                              (SELECT id FROM package_configurations px
+                               WHERE px.sequence_number = circles.sequence_number AND px.version = 1),
+                              (SELECT id FROM package_configurations px
+                               WHERE px.sequence_number = 1 AND px.version = 1)
+                          )), 'Package')
+                ELSE package_name_en_snapshot END,
+            package_name_ar_snapshot = CASE WHEN package_name_ar_snapshot = '' THEN
+                COALESCE((SELECT name_ar FROM package_configurations pc
+                          WHERE pc.id = COALESCE(
+                              circles.package_configuration_id,
+                              (SELECT id FROM package_configurations px
+                               WHERE px.sequence_number = circles.sequence_number AND px.version = 1),
+                              (SELECT id FROM package_configurations px
+                               WHERE px.sequence_number = 1 AND px.version = 1)
+                          )), 'الباقة')
+                ELSE package_name_ar_snapshot END
+        """
+    )
+    database.execute(
+        """
+        UPDATE rewards
+        SET package_configuration_id = COALESCE(
+                package_configuration_id,
+                (SELECT c.package_configuration_id FROM circles c WHERE c.id = rewards.circle_id)
+            ),
+            configuration_version = COALESCE(
+                configuration_version,
+                (SELECT c.configuration_version FROM circles c WHERE c.id = rewards.circle_id),
+                1
+            ),
+            amount_minor = COALESCE(
+                amount_minor,
+                (SELECT c.reward_amount_minor_snapshot FROM circles c WHERE c.id = rewards.circle_id)
+            ),
+            currency = CASE WHEN currency = '' THEN COALESCE(
+                (SELECT c.reward_currency_snapshot FROM circles c WHERE c.id = rewards.circle_id), ''
+            ) ELSE currency END,
+            reward_config_json = CASE WHEN reward_config_json = '{}' THEN COALESCE(
+                (SELECT c.reward_config_snapshot_json FROM circles c WHERE c.id = rewards.circle_id), '{}'
+            ) ELSE reward_config_json END
+        """
+    )
+    legacy_identity_migration = database.execute(
+        "SELECT 1 FROM schema_migrations WHERE version = 206"
+    ).fetchone()
+    if legacy_identity_migration is None:
+        database.execute(
+            """
+            UPDATE invitations
+            SET participant_user_id = (
+                SELECT u.id FROM users u WHERE lower(u.email) = lower(invitations.recipient)
+            )
+            WHERE participant_user_id IS NULL AND instr(recipient, '@') > 1
+            """
+        )
+        database.execute(
+            """
+            UPDATE users
+            SET status = 'activated'
+            WHERE id IN (
+                SELECT DISTINCT i.participant_user_id
+                FROM invitations i
+                JOIN activations a ON a.invitation_id = i.id
+                WHERE i.participant_user_id IS NOT NULL
+            )
+            """
+        )
+        database.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (206, ?)",
+            (utc_now(),),
+        )
+    database.execute(
+        "INSERT OR IGNORE INTO schema_migrations (version, applied_at) VALUES (205, ?)",
         (utc_now(),),
     )
     database.commit()
@@ -919,6 +1091,25 @@ def register_verify():
         verified = verify_code(get_db(), challenge_token, code)
         if verified["pending_registration_id"] != pending_id:
             raise PhoneVerificationError("Verification request does not match this registration.")
+        invitation_claim = read_invite_token(
+            app.config["SECRET_KEY"], session.get("invitation_claim_token", "")
+        )
+        paid_invitation = None
+        if invitation_claim:
+            paid_invitation = get_db().execute(
+                """
+                SELECT i.id FROM invitations i
+                JOIN activations a ON a.invitation_id = i.id
+                WHERE i.id = ? AND i.user_id = ?
+                  AND lower(i.recipient) = lower(?)
+                """,
+                (
+                    invitation_claim.get("invitation_id"),
+                    invitation_claim.get("owner_id"),
+                    pending["email"],
+                ),
+            ).fetchone()
+        account_status = "activated" if paid_invitation else "registered"
         cursor = get_db().execute(
             """
             INSERT INTO users (
@@ -926,13 +1117,14 @@ def register_verify():
                 country_calling_code, normalized_phone,
                 phone_verified, phone_verified_at
             )
-            VALUES (?, ?, ?, ?, 'registered', ?, 0, ?, ?, 1, ?)
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, 1, ?)
             """,
             (
                 pending["name"],
                 pending["email"],
                 verified["normalized_phone"],
                 pending["password_hash"],
+                account_status,
                 date.today().isoformat(),
                 verified["country_calling_code"],
                 verified["normalized_phone"],
@@ -940,6 +1132,15 @@ def register_verify():
             ),
         )
         user_id = cursor.lastrowid
+        if paid_invitation:
+            get_db().execute(
+                """
+                UPDATE invitations
+                SET participant_user_id = ?
+                WHERE id = ? AND participant_user_id IS NULL
+                """,
+                (user_id, paid_invitation["id"]),
+            )
         get_db().execute("INSERT INTO settings (user_id) VALUES (?)", (user_id,))
         ensure_active_package(get_db(), user_id)
         get_db().execute(
@@ -1011,6 +1212,9 @@ def register_resend():
 
 @app.route("/login", methods=("GET", "POST"))
 def login():
+    signed_in_user = current_user()
+    if signed_in_user is not None:
+        return redirect(url_for("admin" if signed_in_user["is_admin"] else "dashboard"))
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -1029,7 +1233,8 @@ def login():
         session.clear()
         session["user_id"] = user["id"]
         next_path = request.args.get("next", "")
-        return redirect(next_path if next_path.startswith("/") and not next_path.startswith("//") else url_for("dashboard"))
+        fallback = url_for("admin" if user["is_admin"] else "dashboard")
+        return redirect(next_path if next_path.startswith("/") and not next_path.startswith("//") else fallback)
     return render_template("auth.html", mode="login")
 
 
@@ -1212,6 +1417,27 @@ def settings():
 def admin():
     return render_template("admin.html", page="admin", data=get_admin_overview(get_db()),
                            invitation_messages=list_messages(get_db(), include_archived=True))
+
+
+@app.route("/admin/packages", methods=("GET", "POST"))
+@admin_required
+def admin_packages():
+    database = get_db()
+    if request.method == "POST":
+        try:
+            save_package_configuration(database, request.form, session["user_id"])
+            database.commit()
+            flash("Package configuration saved. Existing Package history was not changed.", "success")
+            return redirect(url_for("admin_packages"))
+        except (ValueError, TypeError) as error:
+            database.rollback()
+            flash(str(error), "error")
+    return render_template(
+        "admin_packages.html",
+        page="admin",
+        packages=list_package_configurations(database),
+        history=list_package_configurations(database, include_history=True),
+    )
 
 
 @app.route("/admin/appearance", methods=("GET", "POST"))
@@ -1546,6 +1772,25 @@ def api_admin_overview():
     return jsonify(get_admin_overview(get_db()))
 
 
+@app.route("/api/v1/admin/package-configurations", methods=("GET", "POST", "PATCH"))
+@api_admin_required
+def api_admin_package_configurations():
+    if request.method == "GET":
+        return jsonify({
+            "packages": list_package_configurations(get_db()),
+            "history": list_package_configurations(get_db(), include_history=True),
+        })
+    try:
+        row = save_package_configuration(
+            get_db(), request.get_json(silent=True) or {}, session["user_id"]
+        )
+        get_db().commit()
+        return jsonify(dict(row)), 201
+    except (ValueError, TypeError) as error:
+        get_db().rollback()
+        return api_error(str(error), 400)
+
+
 @app.get("/api/v1/admin/appearance")
 @api_admin_required
 def api_admin_appearance():
@@ -1694,6 +1939,7 @@ def public_invitation(token):
     ).fetchone()
     if invitation is None:
         return render_template("public_invitation.html", invalid=True), 404
+    session["invitation_claim_token"] = token
     message = get_message(get_db(), invitation["invitation_message_id"]) if invitation["invitation_message_id"] else None
     if message is not None and (not message["is_approved"] or not message["is_active"] or message["is_archived"]):
         message = None

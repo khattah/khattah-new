@@ -12,7 +12,7 @@
        <span class="status-chip status-chip--{{ data.package_status.tone }}"><i></i>{{ t(data.package_status.label) }}</span>
       {% if data.current_package %}
        <h2>{{ t('package heading', number=data.current_package.sequence_number) }} · {{ t('qualified progress', count=data.qualifying_participants.value, total=data.qualifying_participants.target) }}</h2>
-       <p>{{ t('The first five paid and qualified participants complete this package. Completion is event-driven, never monthly.') }}</p>
+       <p>{{ t('Paid and qualified participants complete this package when its configured target is reached. Completion is event-driven, never monthly.') }}</p>
       <div class="compact-slots">
         {% for slot in data.current_package.slots %}
          <span class="{{ 'filled' if slot.filled }}" title="{{ t('Position') }} {{ slot.position }}">{{ '✓' if slot.filled else slot.position }}</span>

@@ -359,6 +359,11 @@ th { color: var(--muted); font-size: .66rem; text-transform: uppercase; letter-s
 .profile-card__hero p { color: #a7bab6; font-size: .78rem; margin-bottom: 10px; }
 .form-grid { padding: 34px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .form-grid label small { font-weight: 400; color: var(--muted); line-height: 1.4; }
+.package-config-form { padding: 0 40px 34px; }
+.package-config-form .form-grid { padding: 0 0 24px; }
+.package-config-form .form-grid__wide { grid-column: 1 / -1; }
+.package-config-form textarea { resize: vertical; min-height: 82px; }
+.package-config-form .check-row { margin-bottom: 20px; }
 .form-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 8px; }
 .settings-panel { padding: 0; overflow: hidden; }
 .settings-group { padding: 30px 35px; border-bottom: 1px solid #e4e3dd; }
@@ -496,6 +501,8 @@ html[dir="rtl"] .verification-form input { direction: ltr; text-align: center; }
   .transaction-meta { grid-column: 2; text-align: left; display: flex; gap: 10px; align-items: center; }
   .profile-card__hero { padding: 28px 22px; }
   .form-grid { padding: 27px 22px; grid-template-columns: 1fr; }
+  .package-config-form { padding: 0 22px 27px; }
+  .package-config-form .form-grid__wide { grid-column: auto; }
   .form-actions { justify-content: stretch; }
   .form-actions .button { width: 100%; }
   .settings-group { padding: 26px 21px; }

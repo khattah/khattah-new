@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Admin Packages') }} — KHATTAH{% endblock %}
+{% block content %}
+<div class="page-wrap admin-page">
+  <section class="page-heading"><div><span class="eyebrow">{{ t('Package management') }}</span><h1>{{ t('Admin Packages') }}</h1><p>{{ t('Configure future Packages without changing completed Package history.') }}</p></div><a class="button button--coral" href="{{ url_for('admin') }}">{{ t('Back to Admin') }}</a></section>
+  <section class="notice"><span>i</span><div><strong>{{ t('Permanent history') }}</strong><p>{{ t('Every member Package stores a configuration snapshot when it is created. Later edits apply only to future Packages.') }}</p></div></section>
+  <section class="panel admin-section">
+    <div class="panel-heading"><div><span class="eyebrow">{{ t('Add a package') }}</span><h2>{{ t('New package configuration') }}</h2></div></div>
+    <form method="post" class="settings-form package-config-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-grid">
+        <label>{{ t('Package level') }}<input type="number" name="sequence_number" min="1" required></label>
+        <label>{{ t('Display order') }}<input type="number" name="display_order" min="0" required></label>
+        <label>{{ t('English name') }}<input type="text" name="name_en" maxlength="80" required></label>
+        <label>{{ t('Arabic name') }}<input type="text" name="name_ar" maxlength="80" dir="rtl" required></label>
+        <label>{{ t('Package amount') }}<input type="number" name="amount" min="0" step="0.01"></label>
+        <label>{{ t('Currency') }}<input type="text" name="currency" maxlength="3" placeholder="CAD"></label>
+        <label>{{ t('Required qualifying participants') }}<input type="number" name="qualifying_count" min="1" required></label>
+        <label>{{ t('Reward amount') }}<input type="number" name="reward_amount" min="0" step="0.01"></label>
+        <label>{{ t('Reward currency') }}<input type="text" name="reward_currency" maxlength="3" placeholder="CAD"></label>
+        <label class="form-grid__wide">{{ t('Reward configuration') }}<textarea name="reward_config_json" rows="3">{}</textarea></label>
+      </div>
+      <label class="check-row"><input type="checkbox" name="is_active" checked><span>{{ t('Active for future Packages') }}</span></label>
+      <button class="button button--dark" type="submit">{{ t('Add package') }}</button>
+    </form>
+  </section>
+  {% for package in packages %}
+  <section class="panel admin-section" id="package-{{ package.sequence_number }}">
+    <div class="panel-heading"><div><span class="eyebrow">{{ t('Package') }} {{ package.sequence_number }} · v{{ package.version }}</span><h2>{{ package.name_en }} / {{ package.name_ar }}</h2><p>{{ package.amount_label }} · {{ package.qualifying_count }} {{ t('Required qualifying participants') }} · {{ package.reward_amount_label }} {{ t('Reward') }}</p></div><span class="status-chip status-chip--{{ 'green' if package.is_active else 'neutral' }}"><i></i>{{ t('Active') if package.is_active else t('Disabled') }}</span></div>
+    <form method="post" class="settings-form package-config-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="sequence_number" value="{{ package.sequence_number }}">
+      <div class="form-grid">
+        <label>{{ t('Display order') }}<input type="number" name="display_order" min="0" value="{{ package.display_order }}" required></label>
+        <label>{{ t('English name') }}<input type="text" name="name_en" maxlength="80" value="{{ package.name_en }}" required></label>
+        <label>{{ t('Arabic name') }}<input type="text" name="name_ar" maxlength="80" dir="rtl" value="{{ package.name_ar }}" required></label>
+        <label>{{ t('Package amount') }}<input type="number" name="amount" min="0" step="0.01" value="{{ package.amount }}"></label>
+        <label>{{ t('Currency') }}<input type="text" name="currency" maxlength="3" value="{{ package.currency }}"></label>
+        <label>{{ t('Required qualifying participants') }}<input type="number" name="qualifying_count" min="1" value="{{ package.qualifying_count }}" required></label>
+        <label>{{ t('Reward amount') }}<input type="number" name="reward_amount" min="0" step="0.01" value="{{ package.reward_amount }}"></label>
+        <label>{{ t('Reward currency') }}<input type="text" name="reward_currency" maxlength="3" value="{{ package.reward_currency }}"></label>
+        <label class="form-grid__wide">{{ t('Reward configuration') }}<textarea name="reward_config_json" rows="3">{{ package.reward_config_json }}</textarea></label>
+      </div>
+      <label class="check-row"><input type="checkbox" name="is_active" {{ 'checked' if package.is_active }}><span>{{ t('Active for future Packages') }}</span></label>
+      <button class="button button--dark" type="submit">{{ t('Save changes') }}</button>
+    </form>
+  </section>
+  {% endfor %}
+  <section class="panel admin-section"><div class="panel-heading"><div><span class="eyebrow">{{ t('Audit history') }}</span><h2>{{ t('Package status/history') }}</h2></div></div><div class="history-list">
+    {% for item in history %}<article><span class="history-id">#{{ item.sequence_number }}</span><div><strong>{{ item.name_en }} / {{ item.name_ar }} · v{{ item.version }}</strong><small>{{ item.qualifying_count }} {{ t('Required qualifying participants') }} · {{ item.created_at[:19] }}{% if item.created_by_name %} · {{ item.created_by_name }}{% endif %}</small></div><span class="status-chip status-chip--{{ 'green' if item.is_current and item.is_active else 'neutral' }}"><i></i>{{ t('Active') if item.is_current and item.is_active else t('Historical') }}</span></article>{% endfor %}
+  </div></section>
+</div>
+{% endblock %}
